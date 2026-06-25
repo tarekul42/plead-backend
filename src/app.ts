@@ -13,6 +13,7 @@ import { reviewsRouter } from "./modules/reviews";
 import { blogsRouter } from "./modules/blogs";
 import { aiRouter } from "./modules/ai";
 import { adminRouter } from "./modules/admin";
+import { agenciesRouter } from "./modules/agencies";
 import { webhooksRouter } from "./modules/webhooks";
 import { usersRouter } from "./modules/users";
 
@@ -26,11 +27,12 @@ app.use(globalRateLimit);
 
 app.get("/health", (_req, res) => res.json({ status: "ok", timestamp: Date.now() }));
 
+app.use("/api/v1/agencies", agenciesRouter);
 app.use("/api/v1/webhooks", webhooksRouter);
 app.use("/api/v1/properties", propertiesRouter);
 app.use("/api/v1/leads", leadsRouter);
 app.use("/api/v1", interactionsRouter);
-app.use("/api/v1/reviews", reviewsRouter);
+app.use("/api/v1", reviewsRouter);
 app.use("/api/v1/blog", blogsRouter);
 app.use("/api/v1/ai", aiRouter);
 app.use("/api/v1/admin", adminRouter);
