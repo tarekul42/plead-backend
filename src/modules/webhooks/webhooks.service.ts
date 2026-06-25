@@ -1,4 +1,5 @@
 import { UsersService } from "../users";
+import mongoose from "mongoose";
 
 export const WebhooksService = {
   async handleUserCreated(data: {
@@ -12,15 +13,18 @@ export const WebhooksService = {
     const primaryEmail = data.email_addresses?.[0]?.email_address;
     if (!primaryEmail) return null;
 
+    const agencyId = data.public_metadata?.agencyId;
+    if (!agencyId || !mongoose.Types.ObjectId.isValid(agencyId)) return null;
+
     return UsersService.create({
       clerkId: data.id,
       email: primaryEmail,
       name: [data.first_name, data.last_name].filter(Boolean).join(" ") || "Unknown",
       avatarUrl: data.image_url,
-      role: (data.public_metadata?.role as any) || "agent",
-      agencyId: data.public_metadata?.agencyId as any,
+      role: "agent",
+      agencyId: new mongoose.Types.ObjectId(agencyId),
       isActive: true,
-    } as any);
+    });
   },
 
   async handleUserUpdated(data: {
@@ -38,11 +42,10 @@ export const WebhooksService = {
       email: primaryEmail,
       name: [data.first_name, data.last_name].filter(Boolean).join(" ") || "Unknown",
       avatarUrl: data.image_url,
-      role: (data.public_metadata?.role as any) || "agent",
-    } as any);
+    });
   },
 
   async handleUserDeleted(data: { id: string }) {
-    return UsersService.update(data.id, { isActive: false } as any);
+    return UsersService.update(data.id, { isActive: false });
   },
 };

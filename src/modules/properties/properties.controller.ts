@@ -7,13 +7,13 @@ import { PropertiesService } from "./properties.service";
 export const PropertiesController = {
   list: asyncHandler(async (req: Request, res: Response) => {
     const { data, total } = await PropertiesService.list(req.query as any, req.user!.agencyId);
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 12;
+    const page = Number((req.query as any).page) || 1;
+    const limit = Number((req.query as any).limit) || 12;
     res.json(success(data, { page, limit, total }));
   }),
 
   getBySlug: asyncHandler(async (req: Request, res: Response) => {
-    const property = await PropertiesService.getBySlugPublic(String(req.params.slug));
+    const property = await PropertiesService.getBySlugPublic(String(req.params.slug), String(req.query.agencyId || ""));
     if (!property) throw NotFoundError("Property");
     res.json(success(property));
   }),

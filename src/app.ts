@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import { env } from "./core/config/env";
 import { requestLogger } from "./core/middleware/request-logger.middleware";
 import { globalRateLimit } from "./core/middleware/rate-limit.middleware";
@@ -19,7 +20,15 @@ import { usersRouter } from "./modules/users";
 
 const app = express();
 
-app.use(cors({ origin: env.CORS_ORIGIN.split(","), credentials: true }));
+const allowedOrigins = env.CORS_ORIGIN.split(",").filter(Boolean);
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes("*")) return cb(null, true);
+    cb(null, false);
+  },
+  credentials: true,
+}));
+app.use(helmet());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);

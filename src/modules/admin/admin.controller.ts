@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../../core/utils/async-handler";
 import { success } from "../../core/utils/api-response";
+import { NotFoundError } from "../../core/utils/app-error";
 import { AdminService } from "./admin.service";
 
 export const AdminController = {
@@ -14,13 +15,14 @@ export const AdminController = {
     res.json(success(stats));
   }),
 
-  listUsers: asyncHandler(async (_req: Request, res: Response) => {
-    const users = await AdminService.listUsers();
+  listUsers: asyncHandler(async (req: Request, res: Response) => {
+    const users = await AdminService.listUsers(req.user!.agencyId);
     res.json(success(users));
   }),
 
   toggleUserStatus: asyncHandler(async (req: Request, res: Response) => {
-    const user = await AdminService.toggleUserStatus(String(req.params.id));
+    const user = await AdminService.toggleUserStatus(String(req.params.id), req.user!.agencyId);
+    if (!user) throw NotFoundError("User");
     res.json(success(user));
   }),
 

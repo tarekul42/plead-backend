@@ -43,12 +43,12 @@ export const AdminService = {
     };
   },
 
-  async listUsers() {
-    return UserModel.find().sort({ createdAt: -1 }).lean();
+  async listUsers(agencyId: string) {
+    return UserModel.find({ agencyId }).sort({ createdAt: -1 }).lean();
   },
 
-  async toggleUserStatus(userId: string) {
-    const user = await UserModel.findById(userId);
+  async toggleUserStatus(userId: string, agencyId: string) {
+    const user = await UserModel.findOne({ _id: userId, agencyId });
     if (!user) return null;
     user.isActive = !user.isActive;
     return user.save();

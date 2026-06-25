@@ -23,15 +23,22 @@ export const PropertiesService = {
     return propertiesRepository.findBySlug(slug, agencyId);
   },
 
-  async getBySlugPublic(slug: string) {
-    return PropertyModel.findOne({ slug, status: "available" });
+  async getBySlugPublic(slug: string, agencyId: string) {
+    const filter: Record<string, unknown> = { slug, status: "available" };
+    if (agencyId) filter.agencyId = agencyId;
+    return PropertyModel.findOne(filter);
   },
 
   async create(data: Partial<IProperty>) {
-    const slug = data.title
+    let slug = data.title
       ?.toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)+/g, "");
+      .replace(/(^-|-$)+/g, "") || "property";
+    let counter = 0;
+    while (await PropertyModel.findOne({ slug, agencyId: data.agencyId })) {
+      counter++;
+      slug = `${slug}-${counter}`;
+    }
     return propertiesRepository.create({ ...data, slug, publishedAt: new Date() });
   },
 

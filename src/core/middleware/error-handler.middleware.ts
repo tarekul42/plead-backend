@@ -11,7 +11,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     return res.status(err.statusCode).json(error(err.code, err.message, err.details));
   }
   if (err instanceof ZodError) {
-    return res.status(422).json(error("VALIDATION_ERROR", "Validation failed", err.issues));
+    return res.status(422).json(error("VALIDATION_ERROR", "Validation failed"));
   }
   if (err.name === "MulterError") {
     return res.status(400).json(error("UPLOAD_ERROR", err.message));
