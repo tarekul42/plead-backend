@@ -16,7 +16,7 @@ export const BlogsController = {
   }),
 
   getBySlug: asyncHandler(async (req: Request, res: Response) => {
-    const blog = await BlogsService.getBySlug(req.params.slug, req.user!.agencyId);
+    const blog = await BlogsService.getBySlug(String(req.params.slug), req.user!.agencyId);
     if (!blog) throw NotFoundError("Blog");
     res.json(success(blog));
   }),
@@ -27,13 +27,13 @@ export const BlogsController = {
   }),
 
   update: asyncHandler(async (req: Request, res: Response) => {
-    const blog = await BlogsService.update(req.params.id, req.user!.agencyId, req.body);
+    const blog = await BlogsService.update(String(req.params.id), req.user!.agencyId, req.body);
     if (!blog) throw NotFoundError("Blog");
     res.json(success(blog));
   }),
 
   delete: asyncHandler(async (req: Request, res: Response) => {
-    const deleted = await BlogsService.delete(req.params.id, req.user!.agencyId);
+    const deleted = await BlogsService.delete(String(req.params.id), req.user!.agencyId);
     if (!deleted) throw NotFoundError("Blog");
     res.json(success({ deleted: true }));
   }),

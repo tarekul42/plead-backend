@@ -13,7 +13,7 @@ export const PropertiesController = {
   }),
 
   getBySlug: asyncHandler(async (req: Request, res: Response) => {
-    const property = await PropertiesService.getBySlugPublic(req.params.slug);
+    const property = await PropertiesService.getBySlugPublic(String(req.params.slug));
     if (!property) throw NotFoundError("Property");
     res.json(success(property));
   }),
@@ -24,19 +24,19 @@ export const PropertiesController = {
   }),
 
   update: asyncHandler(async (req: Request, res: Response) => {
-    const property = await PropertiesService.update(req.params.id, req.user!.agencyId, req.body);
+    const property = await PropertiesService.update(String(req.params.id), req.user!.agencyId, req.body);
     if (!property) throw NotFoundError("Property");
     res.json(success(property));
   }),
 
   delete: asyncHandler(async (req: Request, res: Response) => {
-    const deleted = await PropertiesService.delete(req.params.id, req.user!.agencyId);
+    const deleted = await PropertiesService.delete(String(req.params.id), req.user!.agencyId);
     if (!deleted) throw NotFoundError("Property");
     res.json(success({ deleted: true }));
   }),
 
   related: asyncHandler(async (req: Request, res: Response) => {
-    const related = await PropertiesService.getRelated(req.params.id, req.user!.agencyId);
+    const related = await PropertiesService.getRelated(String(req.params.id), req.user!.agencyId);
     res.json(success(related));
   }),
 };

@@ -20,7 +20,7 @@ export const AdminController = {
   }),
 
   toggleUserStatus: asyncHandler(async (req: Request, res: Response) => {
-    const user = await AdminService.toggleUserStatus(req.params.id);
+    const user = await AdminService.toggleUserStatus(String(req.params.id));
     res.json(success(user));
   }),
 

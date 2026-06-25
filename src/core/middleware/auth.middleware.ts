@@ -1,25 +1,23 @@
-import { clerkClient } from "../config/clerk";
-import { asyncHandler } from "../utils/async-handler";
-import { UnauthorizedError } from "../utils/app-error";
+import { requireAuth as clerkRequireAuth } from "@clerk/express";
 import { UsersService } from "../../modules/users";
+import { UnauthorizedError } from "../utils/app-error";
 
-export const requireAuth = asyncHandler(async (req, _res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer ")) throw UnauthorizedError("Missing token");
-  const token = authHeader.slice(7);
+export const requireAuth = [
+  clerkRequireAuth(),
+  async (req: any, _res: any, next: any) => {
+    const clerkUserId = req.auth?.userId;
+    if (!clerkUserId) throw UnauthorizedError("Invalid token");
 
-  const clerkUser = await clerkClient.verifyToken(token);
-  if (!clerkUser) throw UnauthorizedError("Invalid token");
+    const dbUser = await UsersService.getByClerkId(clerkUserId);
+    if (!dbUser || !dbUser.isActive) throw UnauthorizedError("User not found or inactive");
 
-  const dbUser = await UsersService.getByClerkId(clerkUser.sub);
-  if (!dbUser || !dbUser.isActive) throw UnauthorizedError("User not found or inactive");
-
-  req.user = {
-    id: dbUser._id.toString(),
-    clerkId: dbUser.clerkId,
-    email: dbUser.email,
-    role: dbUser.role,
-    agencyId: dbUser.agencyId.toString(),
-  };
-  next();
-});
+    req.user = {
+      id: dbUser._id.toString(),
+      clerkId: dbUser.clerkId,
+      email: dbUser.email,
+      role: dbUser.role,
+      agencyId: dbUser.agencyId.toString(),
+    };
+    next();
+  },
+];

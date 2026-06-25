@@ -6,14 +6,14 @@ import { InteractionsService } from "./interactions.service";
 
 export const InteractionsController = {
   listByLead: asyncHandler(async (req: Request, res: Response) => {
-    const interactions = await InteractionsService.listByLead(req.params.leadId, req.user!.agencyId);
+    const interactions = await InteractionsService.listByLead(String(req.params.leadId), req.user!.agencyId);
     res.json(success(interactions));
   }),
 
   create: asyncHandler(async (req: Request, res: Response) => {
     const interaction = await InteractionsService.create({
       ...req.body,
-      leadId: req.params.leadId,
+      leadId: String(req.params.leadId),
       agencyId: req.user!.agencyId,
       performedById: req.user!.id,
     });
@@ -21,13 +21,13 @@ export const InteractionsController = {
   }),
 
   update: asyncHandler(async (req: Request, res: Response) => {
-    const interaction = await InteractionsService.update(req.params.id, req.user!.agencyId, req.body);
+    const interaction = await InteractionsService.update(String(req.params.id), req.user!.agencyId, req.body);
     if (!interaction) throw NotFoundError("Interaction");
     res.json(success(interaction));
   }),
 
   delete: asyncHandler(async (req: Request, res: Response) => {
-    const deleted = await InteractionsService.delete(req.params.id, req.user!.agencyId);
+    const deleted = await InteractionsService.delete(String(req.params.id), req.user!.agencyId);
     if (!deleted) throw NotFoundError("Interaction");
     res.json(success({ deleted: true }));
   }),

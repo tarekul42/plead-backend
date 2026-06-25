@@ -13,7 +13,7 @@ export const LeadsController = {
   }),
 
   getById: asyncHandler(async (req: Request, res: Response) => {
-    const lead = await LeadsService.getById(req.params.id, req.user!.agencyId);
+    const lead = await LeadsService.getById(String(req.params.id), req.user!.agencyId);
     if (!lead) throw NotFoundError("Lead");
     res.json(success(lead));
   }),
@@ -24,13 +24,13 @@ export const LeadsController = {
   }),
 
   update: asyncHandler(async (req: Request, res: Response) => {
-    const lead = await LeadsService.update(req.params.id, req.user!.agencyId, req.body);
+    const lead = await LeadsService.update(String(req.params.id), req.user!.agencyId, req.body);
     if (!lead) throw NotFoundError("Lead");
     res.json(success(lead));
   }),
 
   delete: asyncHandler(async (req: Request, res: Response) => {
-    const deleted = await LeadsService.delete(req.params.id, req.user!.agencyId);
+    const deleted = await LeadsService.delete(String(req.params.id), req.user!.agencyId);
     if (!deleted) throw NotFoundError("Lead");
     res.json(success({ deleted: true }));
   }),

@@ -6,7 +6,7 @@ import { AgenciesService } from "./agencies.service";
 
 export const AgenciesController = {
   getById: asyncHandler(async (req: Request, res: Response) => {
-    const agency = await AgenciesService.getById(req.params.id);
+    const agency = await AgenciesService.getById(String(req.params.id));
     if (!agency) throw NotFoundError("Agency");
     res.json(success(agency));
   }),
@@ -17,7 +17,7 @@ export const AgenciesController = {
   }),
 
   update: asyncHandler(async (req: Request, res: Response) => {
-    const agency = await AgenciesService.update(req.params.id, req.body);
+    const agency = await AgenciesService.update(String(req.params.id), req.body);
     if (!agency) throw NotFoundError("Agency");
     res.json(success(agency));
   }),

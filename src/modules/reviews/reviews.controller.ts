@@ -6,14 +6,14 @@ import { ReviewsService } from "./reviews.service";
 
 export const ReviewsController = {
   listByProperty: asyncHandler(async (req: Request, res: Response) => {
-    const reviews = await ReviewsService.listByProperty(req.params.propertyId, req.user!.agencyId);
+    const reviews = await ReviewsService.listByProperty(String(req.params.propertyId), req.user!.agencyId);
     res.json(success(reviews));
   }),
 
   create: asyncHandler(async (req: Request, res: Response) => {
     const review = await ReviewsService.create({
       ...req.body,
-      propertyId: req.params.propertyId,
+      propertyId: String(req.params.propertyId),
       agencyId: req.user!.agencyId,
       userId: req.user!.id,
     });
@@ -21,13 +21,13 @@ export const ReviewsController = {
   }),
 
   update: asyncHandler(async (req: Request, res: Response) => {
-    const review = await ReviewsService.update(req.params.id, req.user!.agencyId, req.body);
+    const review = await ReviewsService.update(String(req.params.id), req.user!.agencyId, req.body);
     if (!review) throw NotFoundError("Review");
     res.json(success(review));
   }),
 
   delete: asyncHandler(async (req: Request, res: Response) => {
-    const deleted = await ReviewsService.delete(req.params.id, req.user!.agencyId);
+    const deleted = await ReviewsService.delete(String(req.params.id), req.user!.agencyId);
     if (!deleted) throw NotFoundError("Review");
     res.json(success({ deleted: true }));
   }),
