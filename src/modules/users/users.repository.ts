@@ -1,25 +1,23 @@
 import { UserModel, IUser } from "./users.model";
 
-export class UsersRepository {
-  async findByClerkId(clerkId: string): Promise<IUser | null> {
+export const usersRepository = {
+  findByClerkId(clerkId: string) {
     return UserModel.findOne({ clerkId, isActive: true });
-  }
+  },
 
-  async findById(id: string): Promise<IUser | null> {
+  findById(id: string) {
     return UserModel.findById(id);
-  }
+  },
 
-  async create(data: Partial<IUser>): Promise<IUser> {
+  create(data: Partial<IUser>) {
     return UserModel.create(data);
-  }
+  },
 
-  async update(clerkId: string, data: Partial<IUser>): Promise<IUser | null> {
+  update(clerkId: string, data: Partial<IUser>) {
     return UserModel.findOneAndUpdate({ clerkId }, data, { new: true });
-  }
+  },
 
-  async listByAgency(agencyId: string): Promise<IUser[]> {
+  listByAgency(agencyId: string) {
     return UserModel.find({ agencyId });
-  }
-}
-
-export const usersRepository = new UsersRepository();
+  },
+};

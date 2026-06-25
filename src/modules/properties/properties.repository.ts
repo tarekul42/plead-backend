@@ -1,5 +1,4 @@
 import { PropertyModel, IProperty } from "./properties.model";
-import { Types } from "mongoose";
 
 interface ListParams {
   agencyId: string;
@@ -15,7 +14,11 @@ interface ListParams {
   limit: number;
 }
 
-export class PropertiesRepository {
+async function findById(id: string, agencyId: string): Promise<IProperty | null> {
+  return PropertyModel.findOne({ _id: id, agencyId });
+}
+
+export const propertiesRepository = {
   async list(params: ListParams) {
     const filter: Record<string, unknown> = { agencyId: params.agencyId };
 
@@ -56,35 +59,33 @@ export class PropertiesRepository {
     const total = await PropertyModel.countDocuments(filter);
 
     return { data, total };
-  }
+  },
 
-  async findBySlug(slug: string, agencyId: string): Promise<IProperty | null> {
+  findBySlug(slug: string, agencyId: string) {
     return PropertyModel.findOne({ slug, agencyId });
-  }
+  },
 
-  async findById(id: string, agencyId: string): Promise<IProperty | null> {
-    return PropertyModel.findOne({ _id: id, agencyId });
-  }
+  findById,
 
-  async create(data: Partial<IProperty>): Promise<IProperty> {
+  create(data: Partial<IProperty>) {
     return PropertyModel.create(data);
-  }
+  },
 
-  async update(id: string, agencyId: string, data: Partial<IProperty>): Promise<IProperty | null> {
+  update(id: string, agencyId: string, data: Partial<IProperty>) {
     return PropertyModel.findOneAndUpdate({ _id: id, agencyId }, data, { new: true });
-  }
+  },
 
-  async delete(id: string, agencyId: string): Promise<boolean> {
+  async delete(id: string, agencyId: string) {
     const result = await PropertyModel.deleteOne({ _id: id, agencyId });
     return result.deletedCount > 0;
-  }
+  },
 
-  async incrementViews(id: string, agencyId: string): Promise<void> {
-    await PropertyModel.updateOne({ _id: id, agencyId }, { $inc: { views: 1 } });
-  }
+  incrementViews(id: string, agencyId: string) {
+    return PropertyModel.updateOne({ _id: id, agencyId }, { $inc: { views: 1 } });
+  },
 
   async findRelated(propertyId: string, agencyId: string, limit = 4) {
-    const property = await this.findById(propertyId, agencyId);
+    const property = await findById(propertyId, agencyId);
     if (!property) return [];
 
     return PropertyModel.find({
@@ -100,7 +101,5 @@ export class PropertiesRepository {
       .sort({ publishedAt: -1 })
       .limit(limit)
       .lean();
-  }
-}
-
-export const propertiesRepository = new PropertiesRepository();
+  },
+};
