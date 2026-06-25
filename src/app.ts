@@ -29,7 +29,7 @@ app.get("/health", (_req, res) => res.json({ status: "ok", timestamp: Date.now()
 app.use("/api/v1/webhooks", webhooksRouter);
 app.use("/api/v1/properties", propertiesRouter);
 app.use("/api/v1/leads", leadsRouter);
-app.use("/api/v1/interactions", interactionsRouter);
+app.use("/api/v1", interactionsRouter);
 app.use("/api/v1/reviews", reviewsRouter);
 app.use("/api/v1/blog", blogsRouter);
 app.use("/api/v1/ai", aiRouter);
