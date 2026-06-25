@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { callAIWithFallback } from "./providers/provider.factory";
 import { AiRepository } from "./ai.repository";
 import { PropertyModel } from "../properties/properties.model";
@@ -73,11 +74,11 @@ export const AiService = {
     cacheSet(inputHash, result, ttlMs);
 
     await AiRepository.persistAnalysis({
-      agencyId: agencyId as any,
-      userId: userId as any,
+      agencyId: new mongoose.Types.ObjectId(agencyId),
+      userId: new mongoose.Types.ObjectId(userId),
       type: "lead-matching",
       input: { leadId, propertyIds: properties.map((p) => p._id.toString()) },
-      output: result as any,
+      output: result,
       provider,
       tokensUsed,
       durationMs,
@@ -123,11 +124,11 @@ export const AiService = {
     cacheSet(inputHash, result, ttlMs);
 
     await AiRepository.persistAnalysis({
-      agencyId: agencyId as any,
-      userId: userId as any,
+      agencyId: new mongoose.Types.ObjectId(agencyId),
+      userId: new mongoose.Types.ObjectId(userId),
       type: "property-description",
       input: { propertyId, tone },
-      output: result as any,
+      output: result,
       provider,
       tokensUsed,
       durationMs,
@@ -135,10 +136,10 @@ export const AiService = {
     });
 
     await AiRepository.persistCopy({
-      agencyId: agencyId as any,
-      userId: userId as any,
+      agencyId: new mongoose.Types.ObjectId(agencyId),
+      userId: new mongoose.Types.ObjectId(userId),
       type: "property-description",
-      propertyId: propertyId as any,
+      propertyId: new mongoose.Types.ObjectId(propertyId),
       tone,
       content: result.description || "",
     });
@@ -190,11 +191,11 @@ export const AiService = {
     cacheSet(inputHash, result, ttlMs);
 
     await AiRepository.persistAnalysis({
-      agencyId: agencyId as any,
-      userId: userId as any,
+      agencyId: new mongoose.Types.ObjectId(agencyId),
+      userId: new mongoose.Types.ObjectId(userId),
       type: "outreach-email",
       input: { leadId, propertyId, tone },
-      output: result as any,
+      output: result,
       provider,
       tokensUsed,
       durationMs,
@@ -202,11 +203,11 @@ export const AiService = {
     });
 
     await AiRepository.persistCopy({
-      agencyId: agencyId as any,
-      userId: userId as any,
+      agencyId: new mongoose.Types.ObjectId(agencyId),
+      userId: new mongoose.Types.ObjectId(userId),
       type: "outreach-email",
-      propertyId: propertyId as any,
-      leadId: leadId as any,
+      propertyId: new mongoose.Types.ObjectId(propertyId),
+      leadId: new mongoose.Types.ObjectId(leadId),
       tone,
       content: result.body || "",
     });
