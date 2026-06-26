@@ -5,6 +5,11 @@ import { NotFoundError } from "../../core/utils/app-error";
 import { InteractionsService } from "./interactions.service";
 
 export const InteractionsController = {
+  list: asyncHandler(async (req: Request, res: Response) => {
+    const interactions = await InteractionsService.listByAgency(req.user!.agencyId);
+    res.json(success(interactions));
+  }),
+
   listByLead: asyncHandler(async (req: Request, res: Response) => {
     const interactions = await InteractionsService.listByLead(String(req.params.leadId), req.user!.agencyId);
     res.json(success(interactions));

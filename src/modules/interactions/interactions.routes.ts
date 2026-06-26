@@ -9,6 +9,7 @@ const interactionsRouter = Router();
 
 interactionsRouter.use(requireAuth);
 
+interactionsRouter.get("/interactions", requireAuth, InteractionsController.list);
 interactionsRouter.get("/leads/:leadId/interactions", validate(interactionLeadParamSchema, "params"), InteractionsController.listByLead);
 interactionsRouter.post("/leads/:leadId/interactions", StrictRole("agent", "manager", "admin"), validate(createInteractionSchema), validate(interactionLeadParamSchema, "params"), InteractionsController.create);
 interactionsRouter.patch("/interactions/:id", StrictRole("agent", "manager", "admin"), validate(updateInteractionSchema), validate(interactionIdParamSchema, "params"), InteractionsController.update);

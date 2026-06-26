@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 import { ReviewModel, IReview } from "./reviews.model";
 
 export const ReviewsRepository = {
+  async listByAgency(agencyId: string, filter?: Record<string, unknown>) {
+    const query: Record<string, unknown> = { agencyId };
+    if (filter?.isVerified !== undefined) query.isVerified = filter.isVerified;
+    return ReviewModel.find(query).sort({ createdAt: -1 }).lean();
+  },
+
   async listByProperty(propertyId: string, agencyId: string) {
     return ReviewModel.find({ propertyId, agencyId }).sort({ createdAt: -1 }).lean();
   },

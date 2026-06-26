@@ -5,6 +5,13 @@ import { NotFoundError } from "../../core/utils/app-error";
 import { ReviewsService } from "./reviews.service";
 
 export const ReviewsController = {
+  list: asyncHandler(async (req: Request, res: Response) => {
+    const filter: Record<string, unknown> = {};
+    if (req.query.isVerified !== undefined) filter.isVerified = req.query.isVerified === "true";
+    const reviews = await ReviewsService.listByAgency(req.user!.agencyId, filter);
+    res.json(success(reviews));
+  }),
+
   listByProperty: asyncHandler(async (req: Request, res: Response) => {
     const reviews = await ReviewsService.listByProperty(String(req.params.propertyId), req.user!.agencyId);
     res.json(success(reviews));

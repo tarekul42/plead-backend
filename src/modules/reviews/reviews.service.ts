@@ -2,6 +2,10 @@ import { ReviewsRepository } from "./reviews.repository";
 import { IReview } from "./reviews.model";
 
 export const ReviewsService = {
+  async listByAgency(agencyId: string, filter?: Record<string, unknown>) {
+    return ReviewsRepository.listByAgency(agencyId, filter);
+  },
+
   async listByProperty(propertyId: string, agencyId: string) {
     return ReviewsRepository.listByProperty(propertyId, agencyId);
   },

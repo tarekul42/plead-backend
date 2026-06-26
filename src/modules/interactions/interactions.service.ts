@@ -2,6 +2,10 @@ import { InteractionsRepository } from "./interactions.repository";
 import { IInteraction } from "./interactions.model";
 
 export const InteractionsService = {
+  async listByAgency(agencyId: string) {
+    return InteractionsRepository.listByAgency(agencyId);
+  },
+
   async listByLead(leadId: string, agencyId: string) {
     return InteractionsRepository.listByLead(leadId, agencyId);
   },

@@ -1,6 +1,10 @@
 import { InteractionModel, IInteraction } from "./interactions.model";
 
 export const InteractionsRepository = {
+  async listByAgency(agencyId: string) {
+    return InteractionModel.find({ agencyId }).sort({ createdAt: -1 }).lean();
+  },
+
   async listByLead(leadId: string, agencyId: string) {
     return InteractionModel.find({ leadId, agencyId }).sort({ createdAt: -1 }).lean();
   },
