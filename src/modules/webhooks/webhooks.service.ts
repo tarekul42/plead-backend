@@ -1,4 +1,4 @@
-import { UsersService } from "../users";
+import { UserModel } from "../users/users.model";
 import mongoose from "mongoose";
 
 export const WebhooksService = {
@@ -16,15 +16,24 @@ export const WebhooksService = {
     const agencyId = data.public_metadata?.agencyId;
     if (!agencyId || !mongoose.Types.ObjectId.isValid(agencyId)) return null;
 
-    return UsersService.create({
-      clerkId: data.id,
-      email: primaryEmail,
-      name: [data.first_name, data.last_name].filter(Boolean).join(" ") || "Unknown",
-      avatarUrl: data.image_url,
-      role: "agent",
-      agencyId: new mongoose.Types.ObjectId(agencyId),
-      isActive: true,
-    });
+    const role = data.public_metadata?.role;
+    const validRole = role && ["agent", "manager", "admin"].includes(role) ? role : "agent";
+
+    return UserModel.findOneAndUpdate(
+      { clerkId: data.id },
+      {
+        $setOnInsert: {
+          clerkId: data.id,
+          email: primaryEmail,
+          name: [data.first_name, data.last_name].filter(Boolean).join(" ") || "Unknown",
+          avatarUrl: data.image_url,
+          role: validRole,
+          agencyId: new mongoose.Types.ObjectId(agencyId),
+          isActive: true,
+        },
+      },
+      { upsert: true, new: true },
+    );
   },
 
   async handleUserUpdated(data: {
@@ -38,14 +47,18 @@ export const WebhooksService = {
     const primaryEmail = data.email_addresses?.[0]?.email_address;
     if (!primaryEmail) return null;
 
-    return UsersService.update(data.id, {
-      email: primaryEmail,
-      name: [data.first_name, data.last_name].filter(Boolean).join(" ") || "Unknown",
-      avatarUrl: data.image_url,
-    });
+    return UserModel.findOneAndUpdate(
+      { clerkId: data.id },
+      {
+        email: primaryEmail,
+        name: [data.first_name, data.last_name].filter(Boolean).join(" ") || "Unknown",
+        avatarUrl: data.image_url,
+      },
+      { new: true },
+    );
   },
 
   async handleUserDeleted(data: { id: string }) {
-    return UsersService.update(data.id, { isActive: false });
+    return UserModel.findOneAndUpdate({ clerkId: data.id }, { isActive: false }, { new: true });
   },
 };

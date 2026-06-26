@@ -19,7 +19,7 @@ export const requireAuth = [
       clerkId: dbUser.clerkId,
       email: dbUser.email,
       role: dbUser.role,
-      agencyId: dbUser.agencyId.toString(),
+      agencyId: dbUser.agencyId?.toString() || "",
     };
     next();
   },

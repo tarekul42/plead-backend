@@ -1,14 +1,14 @@
 import { BlogModel, IBlog } from "./blogs.model";
+import { QueryBuilder } from "../../core/utils/query-builder";
 
 export const BlogsRepository = {
   async list(agencyId: string, status?: string, page = 1, limit = 10) {
-    const filter: Record<string, unknown> = { agencyId };
-    if (status) filter.status = status;
-
-    const skip = (page - 1) * limit;
-    const data = await BlogModel.find(filter).sort({ publishedAt: -1 }).skip(skip).limit(limit).lean();
-    const total = await BlogModel.countDocuments(filter);
-    return { data, total };
+    return new QueryBuilder(BlogModel)
+      .where("agencyId", agencyId)
+      .where("status", status)
+      .sortDesc("publishedAt")
+      .paginate(page, limit, 100, 10)
+      .exec();
   },
 
   async findBySlug(slug: string, agencyId: string): Promise<IBlog | null> {

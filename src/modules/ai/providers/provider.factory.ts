@@ -43,7 +43,12 @@ export async function callAIWithFallback(params: {
     return { ...result, provider: primary.name };
   } catch (err) {
     logger.error({ err }, "Primary AI failed, trying fallback");
-    const result = await fallback.generateJSON(params);
-    return { ...result, provider: fallback.name };
+    try {
+      const result = await fallback.generateJSON(params);
+      return { ...result, provider: fallback.name };
+    } catch (fallbackErr) {
+      logger.error({ fallbackErr }, "Both AI providers failed");
+      throw new Error("AI providers unavailable");
+    }
   }
 }

@@ -2,12 +2,12 @@ import { ReviewsRepository } from "./reviews.repository";
 import { IReview } from "./reviews.model";
 
 export const ReviewsService = {
-  async listByAgency(agencyId: string, filter?: Record<string, unknown>) {
-    return ReviewsRepository.listByAgency(agencyId, filter);
+  async listByAgency(agencyId: string, isVerified?: string, page = 1, limit = 50) {
+    return ReviewsRepository.listByAgency(agencyId, isVerified, page, limit);
   },
 
-  async listByProperty(propertyId: string, agencyId: string) {
-    return ReviewsRepository.listByProperty(propertyId, agencyId);
+  async listByProperty(propertyId: string, agencyId: string, page = 1, limit = 50) {
+    return ReviewsRepository.listByProperty(propertyId, agencyId, page, limit);
   },
 
   async create(data: Partial<IReview>) {

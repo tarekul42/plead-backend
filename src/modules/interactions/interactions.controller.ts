@@ -2,17 +2,20 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../../core/utils/async-handler";
 import { success } from "../../core/utils/api-response";
 import { NotFoundError } from "../../core/utils/app-error";
+import { Pagination } from "../../core/utils/pagination";
 import { InteractionsService } from "./interactions.service";
 
 export const InteractionsController = {
   list: asyncHandler(async (req: Request, res: Response) => {
-    const interactions = await InteractionsService.listByAgency(req.user!.agencyId);
-    res.json(success(interactions));
+    const { page, limit } = Pagination.from(req.query, 50, 100);
+    const { data, total } = await InteractionsService.listByAgency(req.user!.agencyId, page, limit);
+    res.json(success(data, Pagination.meta(page, limit, total)));
   }),
 
   listByLead: asyncHandler(async (req: Request, res: Response) => {
-    const interactions = await InteractionsService.listByLead(String(req.params.leadId), req.user!.agencyId);
-    res.json(success(interactions));
+    const { page, limit } = Pagination.from(req.query, 50, 100);
+    const { data, total } = await InteractionsService.listByLead(String(req.params.leadId), req.user!.agencyId, page, limit);
+    res.json(success(data, Pagination.meta(page, limit, total)));
   }),
 
   create: asyncHandler(async (req: Request, res: Response) => {

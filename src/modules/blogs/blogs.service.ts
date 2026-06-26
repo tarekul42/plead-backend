@@ -6,15 +6,24 @@ export const BlogsService = {
     return BlogsRepository.list(agencyId, status, page, limit);
   },
 
+  async getById(id: string, agencyId: string) {
+    return BlogsRepository.findById(id, agencyId);
+  },
+
   async getBySlug(slug: string, agencyId: string) {
     return BlogsRepository.findBySlug(slug, agencyId);
   },
 
   async create(data: Partial<IBlog>) {
-    const slug = data.title
+    let slug = data.title
       ?.toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)+/g, "");
+      .replace(/(^-|-$)+/g, "") || "post";
+    let counter = 0;
+    while (await BlogsRepository.findBySlug(slug, String(data.agencyId))) {
+      counter++;
+      slug = `${slug}-${counter}`;
+    }
     return BlogsRepository.create({ ...data, slug, publishedAt: data.status === "published" ? new Date() : undefined });
   },
 

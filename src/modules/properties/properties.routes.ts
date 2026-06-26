@@ -8,6 +8,7 @@ import { createPropertySchema, updatePropertySchema, listPropertiesQuerySchema, 
 const propertiesRouter = Router();
 
 propertiesRouter.get("/", validate(listPropertiesQuerySchema, "query"), PropertiesController.list);
+propertiesRouter.get("/id/:id", requireAuth, validate(propertyParamSchema, "params"), PropertiesController.getById);
 propertiesRouter.get("/:id/related", validate(propertyParamSchema, "params"), PropertiesController.related);
 propertiesRouter.get("/:slug", validate(propertySlugParamSchema, "params"), PropertiesController.getBySlug);
 propertiesRouter.post("/", requireAuth, StrictRole("manager", "admin"), validate(createPropertySchema), PropertiesController.create);

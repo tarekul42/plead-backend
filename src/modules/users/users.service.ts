@@ -18,7 +18,7 @@ export const UsersService = {
     return usersRepository.update(clerkId, data);
   },
 
-  async listByAgency(agencyId: string): Promise<IUser[]> {
-    return usersRepository.listByAgency(agencyId);
+  async listByAgency(agencyId: string, page = 1, limit = 50) {
+    return usersRepository.listByAgency(agencyId, page, limit);
   },
 };

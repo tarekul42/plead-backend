@@ -2,14 +2,14 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../../core/utils/async-handler";
 import { success } from "../../core/utils/api-response";
 import { NotFoundError } from "../../core/utils/app-error";
+import { Pagination } from "../../core/utils/pagination";
 import { LeadsService } from "./leads.service";
 
 export const LeadsController = {
   list: asyncHandler(async (req: Request, res: Response) => {
+    const { page, limit } = Pagination.from(req.query, 20);
     const { data, total } = await LeadsService.list(req.query, req.user!.agencyId);
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 20;
-    res.json(success(data, { page, limit, total }));
+    res.json(success(data, Pagination.meta(page, limit, total)));
   }),
 
   getById: asyncHandler(async (req: Request, res: Response) => {

@@ -1,4 +1,6 @@
 import { LeadModel, ILead } from "./leads.model";
+import { InteractionModel } from "../interactions/interactions.model";
+import { QueryBuilder } from "../../core/utils/query-builder";
 
 interface ListParams {
   agencyId: string;
@@ -11,22 +13,15 @@ interface ListParams {
 
 export const LeadsRepository = {
   async list(params: ListParams) {
-    const filter: Record<string, unknown> = { agencyId: params.agencyId };
+    const builder = new QueryBuilder(LeadModel)
+      .where("agencyId", params.agencyId)
+      .where("status", params.status)
+      .where("assignedAgentId", params.assignedAgentId)
+      .search(["name", "email"], params.q)
+      .sortDesc("createdAt")
+      .paginate(params.page, params.limit, 100, 20);
 
-    if (params.status) filter.status = params.status;
-    if (params.assignedAgentId) filter.assignedAgentId = params.assignedAgentId;
-    if (params.q) {
-      filter.$or = [
-        { name: { $regex: params.q, $options: "i" } },
-        { email: { $regex: params.q, $options: "i" } },
-      ];
-    }
-
-    const skip = (params.page - 1) * params.limit;
-    const data = await LeadModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(params.limit).lean();
-    const total = await LeadModel.countDocuments(filter);
-
-    return { data, total };
+    return builder.exec();
   },
 
   async findById(id: string, agencyId: string): Promise<ILead | null> {
@@ -44,5 +39,9 @@ export const LeadsRepository = {
   async delete(id: string, agencyId: string): Promise<boolean> {
     const result = await LeadModel.deleteOne({ _id: id, agencyId });
     return result.deletedCount > 0;
+  },
+
+  async deleteInteractions(leadId: string) {
+    await InteractionModel.deleteMany({ leadId });
   },
 };

@@ -1,4 +1,5 @@
 import { UserModel, IUser } from "./users.model";
+import { QueryBuilder } from "../../core/utils/query-builder";
 
 export const usersRepository = {
   findByClerkId(clerkId: string) {
@@ -17,7 +18,11 @@ export const usersRepository = {
     return UserModel.findOneAndUpdate({ clerkId }, data, { new: true });
   },
 
-  listByAgency(agencyId: string) {
-    return UserModel.find({ agencyId });
+  async listByAgency(agencyId: string, page = 1, limit = 50) {
+    return new QueryBuilder(UserModel)
+      .where("agencyId", agencyId)
+      .sortDesc("createdAt")
+      .paginate(page, limit, 100, 50)
+      .exec();
   },
 };

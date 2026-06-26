@@ -28,6 +28,10 @@ export const LeadsService = {
   },
 
   async delete(id: string, agencyId: string) {
-    return LeadsRepository.delete(id, agencyId);
+    const deleted = await LeadsRepository.delete(id, agencyId);
+    if (deleted) {
+      await LeadsRepository.deleteInteractions(id);
+    }
+    return deleted;
   },
 };

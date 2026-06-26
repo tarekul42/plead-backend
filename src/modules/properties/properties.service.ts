@@ -1,7 +1,8 @@
 import { propertiesRepository } from "./properties.repository";
 import { PropertyModel, IProperty } from "./properties.model";
+import { ReviewModel } from "../reviews/reviews.model";
 
-interface ListQuery {
+export interface ListQuery {
   q?: string;
   location?: string;
   propertyType?: string;
@@ -19,14 +20,16 @@ export const PropertiesService = {
     return propertiesRepository.list({ ...query, agencyId });
   },
 
+  async getById(id: string, agencyId: string) {
+    return propertiesRepository.findById(id, agencyId);
+  },
+
   async getBySlug(slug: string, agencyId: string) {
     return propertiesRepository.findBySlug(slug, agencyId);
   },
 
-  async getBySlugPublic(slug: string, agencyId: string) {
-    const filter: Record<string, unknown> = { slug, status: "available" };
-    if (agencyId) filter.agencyId = agencyId;
-    return PropertyModel.findOne(filter);
+  async getBySlugPublic(slug: string) {
+    return PropertyModel.findOne({ slug, status: "available" });
   },
 
   async create(data: Partial<IProperty>) {
@@ -49,7 +52,11 @@ export const PropertiesService = {
   },
 
   async delete(id: string, agencyId: string) {
-    return propertiesRepository.delete(id, agencyId);
+    const deleted = await propertiesRepository.delete(id, agencyId);
+    if (deleted) {
+      await ReviewModel.deleteMany({ propertyId: id, agencyId });
+    }
+    return deleted;
   },
 
   async getRelated(id: string, agencyId: string) {

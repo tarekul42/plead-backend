@@ -1,4 +1,5 @@
 import { PropertyModel, IProperty } from "./properties.model";
+import { QueryBuilder } from "../../core/utils/query-builder";
 
 interface ListParams {
   agencyId: string;
@@ -18,47 +19,27 @@ async function findById(id: string, agencyId: string): Promise<IProperty | null>
   return PropertyModel.findOne({ _id: id, agencyId });
 }
 
+const sortMap: Record<string, string> = {
+  newest: "publishedAt",
+  oldest: "publishedAt",
+  "price-asc": "price",
+  "price-desc": "price",
+};
+
 export const propertiesRepository = {
   async list(params: ListParams) {
-    const filter: Record<string, unknown> = { agencyId: params.agencyId };
+    const builder = new QueryBuilder(PropertyModel)
+      .where("agencyId", params.agencyId)
+      .whereTextSearch(params.q)
+      .whereRegex("location", params.location!)
+      .where("propertyType", params.propertyType)
+      .where("status", params.status)
+      .whereRange("beds", params.beds)
+      .whereRange("price", params.priceMin, params.priceMax)
+      .sortBy(sortMap, params.sort)
+      .paginate(params.page, params.limit, 100, 12);
 
-    if (params.q) {
-      filter.$text = { $search: params.q };
-    }
-    if (params.location) {
-      filter.location = { $regex: params.location, $options: "i" };
-    }
-    if (params.propertyType) {
-      filter.propertyType = params.propertyType;
-    }
-    if (params.status) {
-      filter.status = params.status;
-    }
-    if (params.beds) {
-      filter.beds = { $gte: params.beds };
-    }
-    if (params.priceMin || params.priceMax) {
-      filter.price = {};
-      if (params.priceMin) (filter.price as Record<string, unknown>).$gte = params.priceMin;
-      if (params.priceMax) (filter.price as Record<string, unknown>).$lte = params.priceMax;
-    }
-
-    const sortMap: Record<string, string> = {
-      newest: "publishedAt",
-      oldest: "publishedAt",
-      "price-asc": "price",
-      "price-desc": "price",
-    };
-
-    const sortField = sortMap[params.sort || "newest"] || "publishedAt";
-    const sortDir: 1 | -1 = params.sort === "oldest" || params.sort === "price-asc" ? 1 : -1;
-    const sort: Record<string, 1 | -1> = { [sortField]: sortDir };
-
-    const skip = (params.page - 1) * params.limit;
-    const data = await PropertyModel.find(filter).sort(sort).skip(skip).limit(params.limit).lean();
-    const total = await PropertyModel.countDocuments(filter);
-
-    return { data, total };
+    return builder.exec();
   },
 
   findBySlug(slug: string, agencyId: string) {

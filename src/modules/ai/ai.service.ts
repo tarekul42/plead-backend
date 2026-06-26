@@ -6,6 +6,7 @@ import { LeadModel } from "../leads/leads.model";
 import { cacheGet, cacheSet } from "../../core/utils/cache";
 import { hashInput } from "../../core/utils/hash";
 import { env } from "../../core/config/env";
+import { NotFoundError } from "../../core/utils/app-error";
 import {
   buildMatchEngineUserPrompt,
   matchEngineSystemPrompt,
@@ -26,7 +27,7 @@ import { logger } from "../../core/utils/logger";
 export const AiService = {
   async matchLeadProperties(leadId: string, propertyIds: string[] | undefined, userId: string, agencyId: string) {
     const lead = await LeadModel.findOne({ _id: leadId, agencyId });
-    if (!lead) throw new Error("Lead not found");
+    if (!lead) throw NotFoundError("Lead");
 
     const filter: Record<string, unknown> = { agencyId, status: "available" };
     if (propertyIds && propertyIds.length > 0) {
@@ -90,7 +91,7 @@ export const AiService = {
 
   async generatePropertyDescription(propertyId: string, tone: "luxury" | "standard" | "brief", userId: string, agencyId: string) {
     const property = await PropertyModel.findOne({ _id: propertyId, agencyId });
-    if (!property) throw new Error("Property not found");
+    if (!property) throw NotFoundError("Property");
 
     const inputHash = hashInput({ propertyId, tone });
     const cached = cacheGet<{ title: string; description: string; highlights: string[] }>(inputHash);
@@ -149,10 +150,10 @@ export const AiService = {
 
   async generateOutreachEmail(leadId: string, propertyId: string, tone: "professional" | "friendly" | "urgent", userId: string, agencyId: string) {
     const lead = await LeadModel.findOne({ _id: leadId, agencyId });
-    if (!lead) throw new Error("Lead not found");
+    if (!lead) throw NotFoundError("Lead");
 
     const property = await PropertyModel.findOne({ _id: propertyId, agencyId });
-    if (!property) throw new Error("Property not found");
+    if (!property) throw NotFoundError("Property");
 
     const inputHash = hashInput({ leadId, propertyId, tone });
     const cached = cacheGet<{ subject: string; body: string }>(inputHash);

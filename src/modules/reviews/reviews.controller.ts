@@ -2,19 +2,25 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../../core/utils/async-handler";
 import { success } from "../../core/utils/api-response";
 import { NotFoundError } from "../../core/utils/app-error";
+import { Pagination } from "../../core/utils/pagination";
 import { ReviewsService } from "./reviews.service";
 
 export const ReviewsController = {
   list: asyncHandler(async (req: Request, res: Response) => {
-    const filter: Record<string, unknown> = {};
-    if (req.query.isVerified !== undefined) filter.isVerified = req.query.isVerified === "true";
-    const reviews = await ReviewsService.listByAgency(req.user!.agencyId, filter);
-    res.json(success(reviews));
+    const { page, limit } = Pagination.from(req.query, 50, 100);
+    const { data, total } = await ReviewsService.listByAgency(
+      req.user!.agencyId,
+      req.query.isVerified as string | undefined,
+      page,
+      limit,
+    );
+    res.json(success(data, Pagination.meta(page, limit, total)));
   }),
 
   listByProperty: asyncHandler(async (req: Request, res: Response) => {
-    const reviews = await ReviewsService.listByProperty(String(req.params.propertyId), req.user!.agencyId);
-    res.json(success(reviews));
+    const { page, limit } = Pagination.from(req.query, 50, 100);
+    const { data, total } = await ReviewsService.listByProperty(String(req.params.propertyId), req.user!.agencyId, page, limit);
+    res.json(success(data, Pagination.meta(page, limit, total)));
   }),
 
   create: asyncHandler(async (req: Request, res: Response) => {

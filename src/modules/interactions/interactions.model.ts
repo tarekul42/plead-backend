@@ -4,8 +4,10 @@ export interface IInteraction extends Document {
   agencyId: mongoose.Types.ObjectId;
   leadId: mongoose.Types.ObjectId;
   type: "call" | "email" | "meeting" | "note" | "tour" | "other";
+  subject?: string;
   notes?: string;
   outcome?: string;
+  scheduledAt?: Date;
   performedById: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -20,8 +22,10 @@ const interactionSchema = new Schema<IInteraction>(
       enum: ["call", "email", "meeting", "note", "tour", "other"],
       required: true,
     },
+    subject: { type: String, maxlength: 200 },
     notes: { type: String },
     outcome: { type: String },
+    scheduledAt: { type: Date },
     performedById: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true },

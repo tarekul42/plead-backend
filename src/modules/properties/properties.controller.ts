@@ -2,18 +2,25 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../../core/utils/async-handler";
 import { success } from "../../core/utils/api-response";
 import { NotFoundError } from "../../core/utils/app-error";
+import { Pagination } from "../../core/utils/pagination";
 import { PropertiesService } from "./properties.service";
+import type { ListQuery } from "./properties.service";
 
 export const PropertiesController = {
   list: asyncHandler(async (req: Request, res: Response) => {
-    const { data, total } = await PropertiesService.list(req.query as any, req.user!.agencyId);
-    const page = Number((req.query as any).page) || 1;
-    const limit = Number((req.query as any).limit) || 12;
-    res.json(success(data, { page, limit, total }));
+    const { page, limit } = Pagination.from(req.query, 12);
+    const { data, total } = await PropertiesService.list(req.query as unknown as ListQuery, req.user!.agencyId);
+    res.json(success(data, Pagination.meta(page, limit, total)));
   }),
 
   getBySlug: asyncHandler(async (req: Request, res: Response) => {
-    const property = await PropertiesService.getBySlugPublic(String(req.params.slug), String(req.query.agencyId || ""));
+    const property = await PropertiesService.getBySlugPublic(String(req.params.slug));
+    if (!property) throw NotFoundError("Property");
+    res.json(success(property));
+  }),
+
+  getById: asyncHandler(async (req: Request, res: Response) => {
+    const property = await PropertiesService.getById(String(req.params.id), req.user!.agencyId);
     if (!property) throw NotFoundError("Property");
     res.json(success(property));
   }),

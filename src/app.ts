@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import mongoose from "mongoose";
 import { env } from "./core/config/env";
 import { requestLogger } from "./core/middleware/request-logger.middleware";
 import { globalRateLimit } from "./core/middleware/rate-limit.middleware";
@@ -32,9 +33,17 @@ app.use(helmet());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
+app.use((req, res, next) => {
+  res.setHeader("X-Request-Id", req.id as string);
+  next();
+});
 app.use(globalRateLimit);
 
-app.get("/health", (_req, res) => res.json({ status: "ok", timestamp: Date.now() }));
+app.get("/health", (_req, res) => {
+  const dbState = mongoose.connection.readyState;
+  const dbStatus = ["disconnected", "connected", "connecting", "disconnecting"][dbState] || "unknown";
+  res.json({ status: dbState === 1 ? "ok" : "degraded", db: dbStatus, timestamp: Date.now() });
+});
 
 app.use("/api/v1/agencies", agenciesRouter);
 app.use("/api/v1/webhooks", webhooksRouter);

@@ -19,6 +19,12 @@ export const updateBlogSchema = z.object({
   status: z.enum(["draft", "published"]).optional(),
 });
 
+export const listBlogsQuerySchema = z.object({
+  status: z.enum(["draft", "published"]).optional(),
+  page: z.coerce.number().default(1),
+  limit: z.coerce.number().default(10),
+});
+
 export const blogIdParamSchema = z.object({
   id: objectId,
 });

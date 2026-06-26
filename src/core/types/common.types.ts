@@ -4,6 +4,7 @@ export type PaginationMeta = {
   page: number;
   limit: number;
   total: number;
+  totalPages: number;
 };
 
 export type SuccessResponse<T> = {
@@ -22,3 +23,9 @@ export type ErrorResponse = {
 };
 
 export type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;
+
+export interface PaginateParams {
+  page: number;
+  limit: number;
+  skip: number;
+}

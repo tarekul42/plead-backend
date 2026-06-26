@@ -30,30 +30,44 @@ export class GeminiProvider implements AIProvider {
       },
     };
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": env.GEMINI_API_KEY,
-      },
-      body: JSON.stringify(body),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
 
-    if (!res.ok) {
-      const errText = await res.text();
-      logger.error({ status: res.status, errText }, "Gemini API error");
-      throw new Error(`Gemini API error: ${res.status} ${errText}`);
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": env.GEMINI_API_KEY,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        logger.error({ status: res.status, errText }, "Gemini API error");
+        throw new Error(`Gemini API error: ${res.status} ${errText}`);
+      }
+
+      const json = (await res.json()) as {
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+        usageMetadata?: { totalTokenCount?: number };
+      };
+      const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+      let data: unknown = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        logger.error({ text }, "Gemini invalid JSON response");
+        throw new Error("Invalid JSON response from Gemini");
+      }
+      const tokensUsed = json.usageMetadata?.totalTokenCount ?? 0;
+
+      return { data, tokensUsed };
+    } finally {
+      clearTimeout(timeout);
     }
-
-    const json = (await res.json()) as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-      usageMetadata?: { totalTokenCount?: number };
-    };
-    const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
-    const data = text ? JSON.parse(text) : null;
-    const tokensUsed = json.usageMetadata?.totalTokenCount ?? 0;
-
-    return { data, tokensUsed };
   }
 
   async isHealthy(): Promise<boolean> {

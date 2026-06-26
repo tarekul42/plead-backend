@@ -46,5 +46,6 @@ const leadSchema = new Schema<ILead>(
 
 leadSchema.index({ agencyId: 1, status: 1 });
 leadSchema.index({ agencyId: 1, assignedAgentId: 1 });
+leadSchema.index({ agencyId: 1, email: 1 }, { unique: true });
 
 export const LeadModel = mongoose.model<ILead>("Lead", leadSchema);

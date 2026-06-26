@@ -1,15 +1,24 @@
 import mongoose from "mongoose";
 import { ReviewModel, IReview } from "./reviews.model";
+import { QueryBuilder } from "../../core/utils/query-builder";
 
 export const ReviewsRepository = {
-  async listByAgency(agencyId: string, filter?: Record<string, unknown>) {
-    const query: Record<string, unknown> = { agencyId };
-    if (filter?.isVerified !== undefined) query.isVerified = filter.isVerified;
-    return ReviewModel.find(query).sort({ createdAt: -1 }).lean();
+  async listByAgency(agencyId: string, isVerified?: string, page = 1, limit = 50) {
+    return new QueryBuilder(ReviewModel)
+      .where("agencyId", agencyId)
+      .whereBoolean("isVerified", isVerified)
+      .sortDesc("createdAt")
+      .paginate(page, limit, 100, 50)
+      .exec();
   },
 
-  async listByProperty(propertyId: string, agencyId: string) {
-    return ReviewModel.find({ propertyId, agencyId }).sort({ createdAt: -1 }).lean();
+  async listByProperty(propertyId: string, agencyId: string, page = 1, limit = 50) {
+    return new QueryBuilder(ReviewModel)
+      .where("propertyId", propertyId)
+      .where("agencyId", agencyId)
+      .sortDesc("createdAt")
+      .paginate(page, limit, 100, 50)
+      .exec();
   },
 
   async findById(id: string, agencyId: string): Promise<IReview | null> {

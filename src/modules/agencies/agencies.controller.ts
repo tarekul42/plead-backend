@@ -5,6 +5,11 @@ import { NotFoundError } from "../../core/utils/app-error";
 import { AgenciesService } from "./agencies.service";
 
 export const AgenciesController = {
+  list: asyncHandler(async (req: Request, res: Response) => {
+    const agencies = await AgenciesService.list();
+    res.json(success(agencies));
+  }),
+
   getById: asyncHandler(async (req: Request, res: Response) => {
     const agency = await AgenciesService.getById(String(req.params.id));
     if (!agency) throw NotFoundError("Agency");
@@ -20,5 +25,11 @@ export const AgenciesController = {
     const agency = await AgenciesService.update(String(req.params.id), req.body);
     if (!agency) throw NotFoundError("Agency");
     res.json(success(agency));
+  }),
+
+  delete: asyncHandler(async (req: Request, res: Response) => {
+    const deleted = await AgenciesService.delete(String(req.params.id));
+    if (!deleted) throw NotFoundError("Agency");
+    res.json(success({ deleted: true }));
   }),
 };

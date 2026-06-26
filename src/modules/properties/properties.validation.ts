@@ -56,12 +56,12 @@ export const propertySlugParamSchema = z.object({
 export const listPropertiesQuerySchema = z.object({
   q: z.string().optional(),
   location: z.string().optional(),
-  propertyType: z.string().optional(),
+  propertyType: z.enum(["house", "apartment", "condo", "townhouse", "land", "commercial"]).optional(),
   priceMin: z.coerce.number().optional(),
   priceMax: z.coerce.number().optional(),
   beds: z.coerce.number().optional(),
-  status: z.string().optional(),
-  sort: z.string().optional(),
+  status: z.enum(["available", "sold", "rented", "pending"]).optional(),
+  sort: z.enum(["newest", "oldest", "price-asc", "price-desc"]).optional(),
   page: z.coerce.number().default(1),
   limit: z.coerce.number().default(12),
 });

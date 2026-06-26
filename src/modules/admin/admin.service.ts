@@ -3,26 +3,9 @@ import { PropertyModel } from "../properties/properties.model";
 import { LeadModel } from "../leads/leads.model";
 import { ReviewModel } from "../reviews/reviews.model";
 import { AiAnalysisModel } from "../ai/models/ai-analysis.model";
+import { QueryBuilder } from "../../core/utils/query-builder";
 
 export const AdminService = {
-  async getPlatformStats() {
-    const [totalUsers, totalProperties, totalLeads, totalReviews, totalAiCalls] = await Promise.all([
-      UserModel.countDocuments(),
-      PropertyModel.countDocuments(),
-      LeadModel.countDocuments(),
-      ReviewModel.countDocuments(),
-      AiAnalysisModel.countDocuments(),
-    ]);
-
-    return {
-      totalUsers,
-      totalProperties,
-      totalLeads,
-      totalReviews,
-      totalAiCalls,
-    };
-  },
-
   async getAgencyStats(agencyId: string) {
     const [totalUsers, totalProperties, totalLeads, activeLeads, totalReviews, aiCalls] = await Promise.all([
       UserModel.countDocuments({ agencyId }),
@@ -43,8 +26,12 @@ export const AdminService = {
     };
   },
 
-  async listUsers(agencyId: string) {
-    return UserModel.find({ agencyId }).sort({ createdAt: -1 }).lean();
+  async listUsers(agencyId: string, page = 1, limit = 50) {
+    return new QueryBuilder(UserModel)
+      .where("agencyId", agencyId)
+      .sortDesc("createdAt")
+      .paginate(page, limit, 100, 50)
+      .exec();
   },
 
   async toggleUserStatus(userId: string, agencyId: string) {
