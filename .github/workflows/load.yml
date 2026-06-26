@@ -1,0 +1,41 @@
+name: Load Tests
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Every Monday at 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  load-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install --frozen-lockfile
+
+      - name: Start server
+        run: |
+          bun run build
+          bun run start &
+          sleep 5
+        env:
+          NODE_ENV: test
+
+      - name: Run k6 smoke test
+        uses: grafana/run-k6-action@v1
+        with:
+          path: tests/load/smoke.test.js
+        env:
+          BASE_URL: http://localhost:8080
+
+      - name: Run k6 load test
+        uses: grafana/run-k6-action@v1
+        with:
+          path: tests/load/load.test.js
+        env:
+          BASE_URL: http://localhost:8080

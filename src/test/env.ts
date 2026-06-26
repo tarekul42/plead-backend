@@ -1,0 +1,10 @@
+process.env.NODE_ENV = "test";
+process.env.MONGODB_URI = "mongodb://localhost:27017/test";
+process.env.CLERK_SECRET_KEY = "sk_test_dummy";
+process.env.CLERK_WEBHOOK_SECRET = "whsec_dummy";
+process.env.GEMINI_API_KEY = "AIza_dummy";
+process.env.GROQ_API_KEY = "gsk_dummy";
+process.env.CLOUDINARY_CLOUD_NAME = "dummy";
+process.env.CLOUDINARY_API_KEY = "dummy";
+process.env.CLOUDINARY_API_SECRET = "dummy";
+process.env.CORS_ORIGIN = "*";

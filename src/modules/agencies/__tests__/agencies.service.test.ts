@@ -1,0 +1,60 @@
+jest.mock("../agencies.repository", () => ({
+  AgenciesRepository: {
+    findAll: jest.fn(),
+    findById: jest.fn(),
+    findBySlug: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+}));
+
+jest.mock("../agencies.model", () => ({}));
+
+import { AgenciesService } from "../agencies.service";
+
+describe("AgenciesService", () => {
+  let repo: Record<string, jest.Mock>;
+  beforeEach(() => {
+    repo = jest.requireMock("../agencies.repository").AgenciesRepository;
+    jest.clearAllMocks();
+  });
+
+  it("list delegates", async () => {
+    repo.findAll.mockResolvedValue({ data: [], total: 0 });
+    expect(await AgenciesService.list(1, 20)).toEqual({ data: [], total: 0 });
+  });
+
+  it("getById delegates", async () => {
+    repo.findById.mockResolvedValue({ _id: "abc" });
+    expect(await AgenciesService.getById("abc")).toEqual({ _id: "abc" });
+  });
+
+  it("create generates slug", async () => {
+    repo.findBySlug.mockResolvedValue(null);
+    repo.create.mockResolvedValue({ name: "My Agency", slug: "my-agency" });
+    const result = await AgenciesService.create({ name: "My Agency" } as any);
+    expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ slug: "my-agency" }));
+  });
+
+  it("create handles slug collision", async () => {
+    repo.findBySlug
+      .mockResolvedValueOnce({ slug: "my-agency" })
+      .mockResolvedValueOnce(null);
+    repo.create.mockResolvedValue({ name: "My Agency", slug: expect.any(String) });
+
+    const result = await AgenciesService.create({ name: "My Agency" } as any);
+    expect(result.slug).not.toBe("my-agency");
+    expect(repo.findBySlug).toHaveBeenCalledTimes(2);
+  });
+
+  it("update delegates", async () => {
+    repo.update.mockResolvedValue({ _id: "abc", name: "Updated" });
+    expect(await AgenciesService.update("abc", { name: "Updated" })).toEqual({ _id: "abc", name: "Updated" });
+  });
+
+  it("delete delegates", async () => {
+    repo.delete.mockResolvedValue(true);
+    expect(await AgenciesService.delete("abc")).toBe(true);
+  });
+});
