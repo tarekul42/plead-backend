@@ -11,7 +11,11 @@ export function buildPropertyDescriptionUserPrompt(property: {
   features: string[];
   description: string;
 }, tone: "luxury" | "standard" | "brief") {
-  return JSON.stringify({ property, tone });
+  try {
+    return JSON.stringify({ property, tone });
+  } catch {
+    return JSON.stringify({ property: property.title, tone });
+  }
 }
 
 export const propertyDescriptionResponseSchema = {

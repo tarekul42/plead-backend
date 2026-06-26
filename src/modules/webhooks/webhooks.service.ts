@@ -1,5 +1,7 @@
 import { UserModel } from "../users/users.model";
 import mongoose from "mongoose";
+import { logger } from "../../core/utils/logger";
+import { AppError } from "../../core/utils/app-error";
 
 export const WebhooksService = {
   async handleUserCreated(data: {
@@ -11,10 +13,14 @@ export const WebhooksService = {
     public_metadata?: { role?: string; agencyId?: string };
   }) {
     const primaryEmail = data.email_addresses?.[0]?.email_address;
-    if (!primaryEmail) return null;
+    if (!primaryEmail) {
+      throw new AppError(400, "WEBHOOK_VALIDATION", "User has no email address");
+    }
 
     const agencyId = data.public_metadata?.agencyId;
-    if (!agencyId || !mongoose.Types.ObjectId.isValid(agencyId)) return null;
+    if (!agencyId || !mongoose.Types.ObjectId.isValid(agencyId)) {
+      throw new AppError(400, "WEBHOOK_VALIDATION", "Missing or invalid agencyId in user public_metadata");
+    }
 
     const role = data.public_metadata?.role;
     const validRole = role && ["agent", "manager", "admin"].includes(role) ? role : "agent";
@@ -45,15 +51,30 @@ export const WebhooksService = {
     public_metadata?: { role?: string; agencyId?: string };
   }) {
     const primaryEmail = data.email_addresses?.[0]?.email_address;
-    if (!primaryEmail) return null;
+    if (!primaryEmail) {
+      logger.warn({ id: data.id }, "Skipping user.update — no email address");
+      return null;
+    }
+
+    const update: Record<string, unknown> = {
+      email: primaryEmail,
+      name: [data.first_name, data.last_name].filter(Boolean).join(" ") || "Unknown",
+      avatarUrl: data.image_url,
+      role: data.public_metadata?.role && ["agent", "manager", "admin"].includes(data.public_metadata.role)
+        ? data.public_metadata.role
+        : undefined,
+      agencyId: data.public_metadata?.agencyId && mongoose.Types.ObjectId.isValid(data.public_metadata.agencyId)
+        ? new mongoose.Types.ObjectId(data.public_metadata.agencyId)
+        : undefined,
+    };
+
+    for (const k of Object.keys(update)) {
+      if (update[k] === undefined) delete update[k];
+    }
 
     return UserModel.findOneAndUpdate(
       { clerkId: data.id },
-      {
-        email: primaryEmail,
-        name: [data.first_name, data.last_name].filter(Boolean).join(" ") || "Unknown",
-        avatarUrl: data.image_url,
-      },
+      update,
       { new: true },
     );
   },

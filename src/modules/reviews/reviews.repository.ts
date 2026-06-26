@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import { ReviewModel, IReview } from "./reviews.model";
 import { QueryBuilder } from "../../core/utils/query-builder";
 
@@ -22,7 +21,7 @@ export const ReviewsRepository = {
   },
 
   async findById(id: string, agencyId: string): Promise<IReview | null> {
-    return ReviewModel.findOne({ _id: id, agencyId });
+    return ReviewModel.findOne({ _id: id, agencyId }).lean();
   },
 
   async create(data: Partial<IReview>): Promise<IReview> {
@@ -38,16 +37,4 @@ export const ReviewsRepository = {
     return result.deletedCount > 0;
   },
 
-  async getAverageRating(propertyId: string, agencyId: string): Promise<number> {
-    const result = await ReviewModel.aggregate([
-      {
-        $match: {
-          propertyId: new mongoose.Types.ObjectId(propertyId),
-          agencyId: new mongoose.Types.ObjectId(agencyId),
-        },
-      },
-      { $group: { _id: null, average: { $avg: "$rating" } } },
-    ]);
-    return result[0]?.average || 0;
-  },
 };

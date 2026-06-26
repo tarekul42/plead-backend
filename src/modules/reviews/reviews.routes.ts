@@ -8,7 +8,7 @@ import { createReviewSchema, updateReviewSchema, reviewPropertyParamSchema, revi
 const reviewsRouter = Router();
 
 reviewsRouter.get("/reviews", requireAuth, ReviewsController.list);
-reviewsRouter.get("/properties/:propertyId/reviews", validate(reviewPropertyParamSchema, "params"), ReviewsController.listByProperty);
+reviewsRouter.get("/properties/:propertyId/reviews", requireAuth, validate(reviewPropertyParamSchema, "params"), ReviewsController.listByProperty);
 reviewsRouter.post("/properties/:propertyId/reviews", requireAuth, StrictRole("agent", "manager", "admin"), validate(createReviewSchema), validate(reviewPropertyParamSchema, "params"), ReviewsController.create);
 reviewsRouter.patch("/reviews/:id", requireAuth, StrictRole("manager", "admin"), validate(updateReviewSchema), validate(reviewIdParamSchema, "params"), ReviewsController.update);
 reviewsRouter.delete("/reviews/:id", requireAuth, StrictRole("manager", "admin"), validate(reviewIdParamSchema, "params"), ReviewsController.delete);

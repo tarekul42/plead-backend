@@ -1,28 +1,30 @@
-const store = new Map<string, { data: unknown; expiresAt: number }>();
-const MAX_SIZE = 500;
+import mongoose, { Schema, Document } from "mongoose";
 
-// Simple LRU: delete oldest entry when over limit
-function evictIfNeeded() {
-  if (store.size >= MAX_SIZE) {
-    const oldestKey = store.keys().next().value;
-    if (oldestKey !== undefined) store.delete(oldestKey);
-  }
+interface ICacheEntry extends Document {
+  key: string;
+  data: unknown;
+  expiresAt: Date;
 }
 
-export function cacheGet<T>(key: string): T | undefined {
-  const entry = store.get(key);
-  if (!entry) return undefined;
-  if (Date.now() > entry.expiresAt) {
-    store.delete(key);
-    return undefined;
-  }
-  // Move to end (LRU refresh)
-  store.delete(key);
-  store.set(key, entry);
-  return entry.data as T;
+const cacheSchema = new Schema<ICacheEntry>({
+  key: { type: String, required: true, unique: true },
+  data: { type: Schema.Types.Mixed, required: true },
+  expiresAt: { type: Date, required: true, index: true },
+});
+
+cacheSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+const CacheModel = mongoose.model<ICacheEntry>("Cache", cacheSchema);
+
+export async function cacheGet<T>(key: string): Promise<T | undefined> {
+  const entry = await CacheModel.findOne({ key, expiresAt: { $gt: new Date() } }).lean();
+  return entry?.data as T | undefined;
 }
 
-export function cacheSet(key: string, data: unknown, ttlMs: number): void {
-  evictIfNeeded();
-  store.set(key, { data, expiresAt: Date.now() + ttlMs });
+export async function cacheSet(key: string, data: unknown, ttlMs: number): Promise<void> {
+  await CacheModel.findOneAndUpdate(
+    { key },
+    { key, data, expiresAt: new Date(Date.now() + ttlMs) },
+    { upsert: true, new: true, lean: true },
+  );
 }

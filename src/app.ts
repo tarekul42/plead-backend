@@ -21,7 +21,9 @@ import { usersRouter } from "./modules/users";
 
 const app = express();
 
-const allowedOrigins = env.CORS_ORIGIN.split(",").filter(Boolean);
+app.set("trust proxy", 1);
+
+const allowedOrigins = env.CORS_ORIGIN.split(",").map(s => s.trim()).filter(Boolean);
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes("*")) return cb(null, true);
@@ -30,11 +32,15 @@ app.use(cors({
   credentials: true,
 }));
 app.use(helmet());
+
+app.use("/api/v1/webhooks", webhooksRouter);
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
 app.use((req, res, next) => {
-  res.setHeader("X-Request-Id", req.id as string);
+  const requestId = (req.id as string) || crypto.randomUUID();
+  res.setHeader("X-Request-Id", requestId);
   next();
 });
 app.use(globalRateLimit);
@@ -46,7 +52,6 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/api/v1/agencies", agenciesRouter);
-app.use("/api/v1/webhooks", webhooksRouter);
 app.use("/api/v1/properties", propertiesRouter);
 app.use("/api/v1/leads", leadsRouter);
 app.use("/api/v1", interactionsRouter);

@@ -16,14 +16,13 @@ const envSchema = z.object({
   AI_PROVIDER_FALLBACK: z.enum(["gemini", "groq"]).default("groq"),
   AI_CACHE_TTL_HOURS: z.coerce.number().default(24),
   AI_RATE_LIMIT_PER_USER_PER_HOUR: z.coerce.number().default(10),
-  CLOUDINARY_CLOUD_NAME: z.string(),
-  CLOUDINARY_API_KEY: z.string(),
-  CLOUDINARY_API_SECRET: z.string(),
-  CORS_ORIGIN: z.string(),
+  CLOUDINARY_CLOUD_NAME: z.string().min(1),
+  CLOUDINARY_API_KEY: z.string().min(1),
+  CLOUDINARY_API_SECRET: z.string().min(1),
+  CORS_ORIGIN: z.string().min(1),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900000),
   RATE_LIMIT_MAX: z.coerce.number().default(100),
   SENTRY_DSN: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);
-export type Env = z.infer<typeof envSchema>;

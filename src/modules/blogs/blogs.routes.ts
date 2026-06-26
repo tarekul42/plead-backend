@@ -7,9 +7,9 @@ import { createBlogSchema, updateBlogSchema, listBlogsQuerySchema, blogIdParamSc
 
 const blogsRouter = Router();
 
-blogsRouter.get("/", validate(listBlogsQuerySchema, "query"), BlogsController.list);
+blogsRouter.get("/", requireAuth, validate(listBlogsQuerySchema, "query"), BlogsController.list);
 blogsRouter.get("/id/:id", requireAuth, validate(blogIdParamSchema, "params"), BlogsController.getById);
-blogsRouter.get("/:slug", validate(blogSlugParamSchema, "params"), BlogsController.getBySlug);
+blogsRouter.get("/:slug", requireAuth, validate(blogSlugParamSchema, "params"), BlogsController.getBySlug);
 blogsRouter.post("/", requireAuth, StrictRole("manager", "admin"), validate(createBlogSchema), BlogsController.create);
 blogsRouter.patch("/:id", requireAuth, StrictRole("manager", "admin"), validate(updateBlogSchema), validate(blogIdParamSchema, "params"), BlogsController.update);
 blogsRouter.delete("/:id", requireAuth, StrictRole("manager", "admin"), validate(blogIdParamSchema, "params"), BlogsController.delete);

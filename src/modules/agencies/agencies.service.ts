@@ -2,8 +2,8 @@ import { AgenciesRepository } from "./agencies.repository";
 import { IAgency } from "./agencies.model";
 
 export const AgenciesService = {
-  async list() {
-    return AgenciesRepository.findAll();
+  async list(page = 1, limit = 20) {
+    return AgenciesRepository.findAll(page, limit);
   },
 
   async getById(id: string) {
@@ -11,14 +11,13 @@ export const AgenciesService = {
   },
 
   async create(data: Partial<IAgency>) {
-    let slug = data.name
+    const base = data.name
       ?.toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)+/g, "") || "agency";
-    let counter = 0;
+    let slug = base;
     while (await AgenciesRepository.findBySlug(slug)) {
-      counter++;
-      slug = `${slug}-${counter}`;
+      slug = `${base}-${Date.now()}`;
     }
     return AgenciesRepository.create({ ...data, slug });
   },

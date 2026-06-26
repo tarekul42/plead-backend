@@ -16,7 +16,7 @@ interface ListParams {
 }
 
 async function findById(id: string, agencyId: string): Promise<IProperty | null> {
-  return PropertyModel.findOne({ _id: id, agencyId });
+  return PropertyModel.findOne({ _id: id, agencyId }).lean();
 }
 
 const sortMap: Record<string, string> = {
@@ -26,12 +26,12 @@ const sortMap: Record<string, string> = {
   "price-desc": "price",
 };
 
-export const propertiesRepository = {
+export const PropertiesRepository = {
   async list(params: ListParams) {
     const builder = new QueryBuilder(PropertyModel)
       .where("agencyId", params.agencyId)
       .whereTextSearch(params.q)
-      .whereRegex("location", params.location!)
+      .whereRegex("location", params.location || "")
       .where("propertyType", params.propertyType)
       .where("status", params.status)
       .whereRange("beds", params.beds)
@@ -43,7 +43,7 @@ export const propertiesRepository = {
   },
 
   findBySlug(slug: string, agencyId: string) {
-    return PropertyModel.findOne({ slug, agencyId });
+    return PropertyModel.findOne({ slug, agencyId }).lean();
   },
 
   findById,
@@ -59,10 +59,6 @@ export const propertiesRepository = {
   async delete(id: string, agencyId: string) {
     const result = await PropertyModel.deleteOne({ _id: id, agencyId });
     return result.deletedCount > 0;
-  },
-
-  incrementViews(id: string, agencyId: string) {
-    return PropertyModel.updateOne({ _id: id, agencyId }, { $inc: { views: 1 } });
   },
 
   async findRelated(propertyId: string, agencyId: string, limit = 4) {

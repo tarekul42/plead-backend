@@ -1,6 +1,7 @@
-import { propertiesRepository } from "./properties.repository";
+import { PropertiesRepository } from "./properties.repository";
 import { PropertyModel, IProperty } from "./properties.model";
 import { ReviewModel } from "../reviews/reviews.model";
+import { InternalError } from "../../core/utils/app-error";
 
 export interface ListQuery {
   q?: string;
@@ -17,49 +18,56 @@ export interface ListQuery {
 
 export const PropertiesService = {
   async list(query: ListQuery, agencyId: string) {
-    return propertiesRepository.list({ ...query, agencyId });
+    return PropertiesRepository.list({ ...query, agencyId });
   },
 
   async getById(id: string, agencyId: string) {
-    return propertiesRepository.findById(id, agencyId);
+    return PropertiesRepository.findById(id, agencyId);
   },
 
   async getBySlug(slug: string, agencyId: string) {
-    return propertiesRepository.findBySlug(slug, agencyId);
-  },
-
-  async getBySlugPublic(slug: string) {
-    return PropertyModel.findOne({ slug, status: "available" });
+    return PropertiesRepository.findBySlug(slug, agencyId);
   },
 
   async create(data: Partial<IProperty>) {
-    let slug = data.title
+    const base = data.title
       ?.toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)+/g, "") || "property";
-    let counter = 0;
-    while (await PropertyModel.findOne({ slug, agencyId: data.agencyId })) {
-      counter++;
-      slug = `${slug}-${counter}`;
+    let slug = base;
+    while (await PropertyModel.findOne({ slug, agencyId: data.agencyId }).lean()) {
+      slug = `${base}-${Date.now()}`;
     }
-    return propertiesRepository.create({ ...data, slug, publishedAt: new Date() });
+    return PropertiesRepository.create({ ...data, slug, publishedAt: new Date() });
   },
 
   async update(id: string, agencyId: string, data: Partial<IProperty>) {
-    const existing = await propertiesRepository.findById(id, agencyId);
+    const existing = await PropertiesRepository.findById(id, agencyId);
     if (!existing) return null;
-    return propertiesRepository.update(id, agencyId, data);
+    return PropertiesRepository.update(id, agencyId, data);
   },
 
   async delete(id: string, agencyId: string) {
-    const deleted = await propertiesRepository.delete(id, agencyId);
-    if (deleted) {
-      await ReviewModel.deleteMany({ propertyId: id, agencyId });
+    const session = await PropertyModel.startSession();
+    try {
+      session.startTransaction();
+      const result = await PropertyModel.deleteOne({ _id: id, agencyId }).session(session);
+      if (result.deletedCount === 0) {
+        await session.abortTransaction();
+        return false;
+      }
+      await ReviewModel.deleteMany({ propertyId: id, agencyId }).session(session);
+      await session.commitTransaction();
+      return true;
+    } catch {
+      await session.abortTransaction();
+      throw InternalError("Failed to delete property and associated data");
+    } finally {
+      session.endSession();
     }
-    return deleted;
   },
 
   async getRelated(id: string, agencyId: string) {
-    return propertiesRepository.findRelated(id, agencyId);
+    return PropertiesRepository.findRelated(id, agencyId);
   },
 };

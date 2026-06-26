@@ -26,7 +26,11 @@ async function seed() {
     "aianalyses", "aigeneratedcopies",
   ];
   for (const c of collections) {
-    await mongoose.connection.db?.dropCollection(c).catch(() => {});
+    await mongoose.connection.db?.dropCollection(c).catch((err: unknown) => {
+      if ((err as { codeName?: string })?.codeName !== "NamespaceNotFound") {
+        console.warn(`Failed to drop collection ${c}:`, (err as Error).message);
+      }
+    });
   }
   console.log("Cleared existing collections");
 

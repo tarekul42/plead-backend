@@ -9,26 +9,6 @@ const providers: Record<string, AIProvider> = {
   groq: new GroqProvider(),
 };
 
-let cachedPrimary: AIProvider | null = null;
-let lastHealthCheck = 0;
-
-export async function getAIProvider(): Promise<AIProvider> {
-  const now = Date.now();
-  const primary = providers[env.AI_PROVIDER_PRIMARY];
-  const fallback = providers[env.AI_PROVIDER_FALLBACK];
-
-  if (now - lastHealthCheck > 60_000) {
-    lastHealthCheck = now;
-    const healthy = await primary.isHealthy();
-    cachedPrimary = healthy ? primary : fallback;
-    if (!healthy) {
-      logger.warn("Primary AI provider unhealthy, falling back");
-    }
-  }
-
-  return cachedPrimary ?? primary;
-}
-
 export async function callAIWithFallback(params: {
   system: string;
   user: string;
@@ -36,7 +16,9 @@ export async function callAIWithFallback(params: {
   temperature?: number;
 }): Promise<{ data: unknown; tokensUsed: number; provider: string }> {
   const primary = providers[env.AI_PROVIDER_PRIMARY];
+  if (!primary) throw new Error(`Unknown primary AI provider: ${env.AI_PROVIDER_PRIMARY}`);
   const fallback = providers[env.AI_PROVIDER_FALLBACK];
+  if (!fallback) throw new Error(`Unknown fallback AI provider: ${env.AI_PROVIDER_FALLBACK}`);
 
   try {
     const result = await primary.generateJSON(params);

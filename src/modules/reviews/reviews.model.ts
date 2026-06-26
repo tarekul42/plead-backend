@@ -25,7 +25,8 @@ const reviewSchema = new Schema<IReview>(
   { timestamps: true },
 );
 
-reviewSchema.index({ propertyId: 1, createdAt: -1 });
+reviewSchema.index({ propertyId: 1, agencyId: 1, createdAt: -1 });
+reviewSchema.index({ agencyId: 1, isVerified: 1, createdAt: -1 });
 reviewSchema.index({ agencyId: 1, rating: 1 });
 reviewSchema.index({ userId: 1, propertyId: 1 }, { unique: true });
 

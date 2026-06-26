@@ -11,15 +11,15 @@ export const BlogsRepository = {
       .exec();
   },
 
-  async findBySlug(slug: string, agencyId: string): Promise<IBlog | null> {
-    return BlogModel.findOne({ slug, agencyId });
+  findBySlug(slug: string, agencyId: string): Promise<IBlog | null> {
+    return BlogModel.findOne({ slug, agencyId }).lean();
   },
 
-  async findById(id: string, agencyId: string): Promise<IBlog | null> {
-    return BlogModel.findOne({ _id: id, agencyId });
+  findById(id: string, agencyId: string): Promise<IBlog | null> {
+    return BlogModel.findOne({ _id: id, agencyId }).lean();
   },
 
-  async create(data: Partial<IBlog>): Promise<IBlog> {
+  create(data: Partial<IBlog>): Promise<IBlog> {
     return BlogModel.create(data);
   },
 

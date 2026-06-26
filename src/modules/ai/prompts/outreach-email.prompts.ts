@@ -22,7 +22,11 @@ export function buildOutreachEmailUserPrompt(lead: {
   propertyType: string;
   features: string[];
 }, tone: "professional" | "friendly" | "urgent") {
-  return JSON.stringify({ lead, property, tone });
+  try {
+    return JSON.stringify({ lead, property, tone });
+  } catch {
+    return JSON.stringify({ lead: lead.name, property: property.title, tone });
+  }
 }
 
 export const outreachEmailResponseSchema = {

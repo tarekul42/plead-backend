@@ -18,6 +18,9 @@ export const AdminController = {
   }),
 
   toggleUserStatus: asyncHandler(async (req: Request, res: Response) => {
+    if (req.params.id === req.user!.id) {
+      return res.status(400).json({ success: false, error: { code: "SELF_DEACTIVATE", message: "Cannot deactivate yourself" } });
+    }
     const user = await AdminService.toggleUserStatus(String(req.params.id), req.user!.agencyId);
     if (!user) throw NotFoundError("User");
     res.json(success(user));
@@ -26,7 +29,7 @@ export const AdminController = {
   getAiAnalytics: asyncHandler(async (req: Request, res: Response) => {
     const analytics = await AdminService.getRecentAiAnalytics(
       req.user!.agencyId,
-      Number(req.query.limit) || 20,
+      Math.min(Number(req.query.limit) || 20, 100),
     );
     res.json(success(analytics));
   }),

@@ -5,7 +5,7 @@ import { NotFoundError } from "../../core/utils/app-error";
 import { Pagination } from "../../core/utils/pagination";
 import { UsersService } from "./users.service";
 
-export const usersController = {
+export const UsersController = {
   list: asyncHandler(async (req: Request, res: Response) => {
     const { page, limit } = Pagination.from(req.query, 50, 100);
     const { data, total } = await UsersService.listByAgency(req.user!.agencyId, page, limit);
@@ -24,9 +24,7 @@ export const usersController = {
   }),
 
   update: asyncHandler(async (req: Request, res: Response) => {
-    const user = await UsersService.getById(String(req.params.id));
-    if (!user || String(user.agencyId) !== req.user!.agencyId) throw NotFoundError("User");
-    const updated = await UsersService.update(user.clerkId, req.body);
+    const updated = await UsersService.updateById(String(req.params.id), req.user!.agencyId, req.body);
     if (!updated) throw NotFoundError("User");
     res.json(success(updated));
   }),

@@ -8,7 +8,7 @@ import { QueryBuilder } from "../../core/utils/query-builder";
 export const AdminService = {
   async getAgencyStats(agencyId: string) {
     const [totalUsers, totalProperties, totalLeads, activeLeads, totalReviews, aiCalls] = await Promise.all([
-      UserModel.countDocuments({ agencyId }),
+      UserModel.countDocuments({ agencyId, isActive: true }),
       PropertyModel.countDocuments({ agencyId }),
       LeadModel.countDocuments({ agencyId }),
       LeadModel.countDocuments({ agencyId, status: { $in: ["new", "contacted", "qualified"] } }),
@@ -29,6 +29,7 @@ export const AdminService = {
   async listUsers(agencyId: string, page = 1, limit = 50) {
     return new QueryBuilder(UserModel)
       .where("agencyId", agencyId)
+      .where("isActive", true)
       .sortDesc("createdAt")
       .paginate(page, limit, 100, 50)
       .exec();
@@ -45,6 +46,7 @@ export const AdminService = {
     return AiAnalysisModel.find({ agencyId })
       .sort({ createdAt: -1 })
       .limit(limit)
+      .select("-input -output")
       .lean();
   },
 };

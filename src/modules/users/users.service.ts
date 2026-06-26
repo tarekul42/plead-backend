@@ -1,24 +1,28 @@
-import { usersRepository } from "./users.repository";
+import { UsersRepository } from "./users.repository";
 import { IUser } from "./users.model";
 
 export const UsersService = {
   async getByClerkId(clerkId: string): Promise<IUser | null> {
-    return usersRepository.findByClerkId(clerkId);
+    return UsersRepository.findByClerkId(clerkId);
   },
 
   async getById(id: string): Promise<IUser | null> {
-    return usersRepository.findById(id);
+    return UsersRepository.findById(id);
   },
 
   async create(data: Partial<IUser>): Promise<IUser> {
-    return usersRepository.create(data);
+    return UsersRepository.create(data);
   },
 
   async update(clerkId: string, data: Partial<IUser>): Promise<IUser | null> {
-    return usersRepository.update(clerkId, data);
+    return UsersRepository.update(clerkId, data);
+  },
+
+  async updateById(id: string, agencyId: string, data: Partial<IUser>): Promise<IUser | null> {
+    return UsersRepository.updateById(id, agencyId, data);
   },
 
   async listByAgency(agencyId: string, page = 1, limit = 50) {
-    return usersRepository.listByAgency(agencyId, page, limit);
+    return UsersRepository.listByAgency(agencyId, page, limit);
   },
 };

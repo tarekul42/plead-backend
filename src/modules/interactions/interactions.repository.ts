@@ -10,6 +10,15 @@ export const InteractionsRepository = {
       .exec();
   },
 
+  async listByUser(userId: string, agencyId: string, page = 1, limit = 50) {
+    return new QueryBuilder(InteractionModel)
+      .where("agencyId", agencyId)
+      .where("performedById", userId)
+      .sortDesc("createdAt")
+      .paginate(page, limit, 100, 50)
+      .exec();
+  },
+
   async listByLead(leadId: string, agencyId: string, page = 1, limit = 50) {
     return new QueryBuilder(InteractionModel)
       .where("leadId", leadId)
@@ -20,7 +29,7 @@ export const InteractionsRepository = {
   },
 
   async findById(id: string, agencyId: string): Promise<IInteraction | null> {
-    return InteractionModel.findOne({ _id: id, agencyId });
+    return InteractionModel.findOne({ _id: id, agencyId }).lean();
   },
 
   async create(data: Partial<IInteraction>): Promise<IInteraction> {

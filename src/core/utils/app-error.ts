@@ -24,3 +24,6 @@ export const ValidationError = (details: object) =>
 
 export const RateLimitError = () =>
   new AppError(429, "RATE_LIMITED", "Too many requests");
+
+export const InternalError = (msg = "Internal error") =>
+  new AppError(500, "INTERNAL_ERROR", msg);

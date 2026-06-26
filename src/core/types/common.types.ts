@@ -1,4 +1,5 @@
-export type Role = "agent" | "manager" | "admin";
+import type { Role } from "../constants";
+export type { Role };
 
 export type PaginationMeta = {
   page: number;

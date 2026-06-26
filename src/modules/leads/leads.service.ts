@@ -5,9 +5,9 @@ export const LeadsService = {
   async list(query: Record<string, unknown>, agencyId: string) {
     return LeadsRepository.list({
       agencyId,
-      status: query.status as string | undefined,
-      assignedAgentId: query.assignedAgentId as string | undefined,
-      q: query.q as string | undefined,
+      status: typeof query.status === "string" ? query.status : undefined,
+      assignedAgentId: typeof query.assignedAgentId === "string" ? query.assignedAgentId : undefined,
+      q: typeof query.q === "string" ? query.q : undefined,
       page: Number(query.page) || 1,
       limit: Number(query.limit) || 20,
     });
@@ -28,10 +28,6 @@ export const LeadsService = {
   },
 
   async delete(id: string, agencyId: string) {
-    const deleted = await LeadsRepository.delete(id, agencyId);
-    if (deleted) {
-      await LeadsRepository.deleteInteractions(id);
-    }
-    return deleted;
+    return LeadsRepository.delete(id, agencyId);
   },
 };

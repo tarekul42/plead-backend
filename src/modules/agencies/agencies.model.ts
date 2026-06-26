@@ -23,4 +23,6 @@ const agencySchema = new Schema<IAgency>(
   { timestamps: true },
 );
 
+agencySchema.index({ name: 1 });
+
 export const AgencyModel = mongoose.model<IAgency>("Agency", agencySchema);

@@ -4,7 +4,21 @@ import { logger } from "../utils/logger";
 
 export async function connectDB() {
   mongoose.set("strictQuery", true);
-  await mongoose.connect(env.MONGODB_URI);
+  const maxRetries = 3;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await mongoose.connect(env.MONGODB_URI);
+      break;
+    } catch (err) {
+      if (attempt < maxRetries) {
+        logger.warn({ attempt }, "MongoDB connection attempt failed, retrying...");
+        await new Promise(r => setTimeout(r, attempt * 1000));
+      } else {
+        logger.fatal({ err }, "MongoDB connection failed after all retries");
+        throw err;
+      }
+    }
+  }
   logger.info("MongoDB connected");
 
   mongoose.connection.on("error", (err) =>

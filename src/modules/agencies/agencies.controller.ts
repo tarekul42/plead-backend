@@ -2,12 +2,14 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../../core/utils/async-handler";
 import { success } from "../../core/utils/api-response";
 import { NotFoundError } from "../../core/utils/app-error";
+import { Pagination } from "../../core/utils/pagination";
 import { AgenciesService } from "./agencies.service";
 
 export const AgenciesController = {
   list: asyncHandler(async (req: Request, res: Response) => {
-    const agencies = await AgenciesService.list();
-    res.json(success(agencies));
+    const { page, limit } = Pagination.from(req.query, 20, 100);
+    const { data, total } = await AgenciesService.list(page, limit);
+    res.json(success(data, Pagination.meta(page, limit, total)));
   }),
 
   getById: asyncHandler(async (req: Request, res: Response) => {

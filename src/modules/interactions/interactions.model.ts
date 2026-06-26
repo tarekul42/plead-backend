@@ -31,7 +31,8 @@ const interactionSchema = new Schema<IInteraction>(
   { timestamps: true },
 );
 
-interactionSchema.index({ leadId: 1, createdAt: -1 });
-interactionSchema.index({ agencyId: 1, performedById: 1 });
+interactionSchema.index({ leadId: 1, agencyId: 1, createdAt: -1 });
+interactionSchema.index({ agencyId: 1, performedById: 1, createdAt: -1 });
+interactionSchema.index({ agencyId: 1, createdAt: -1 });
 
 export const InteractionModel = mongoose.model<IInteraction>("Interaction", interactionSchema);

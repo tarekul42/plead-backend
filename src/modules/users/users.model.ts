@@ -1,11 +1,12 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { ROLES, type Role } from "../../core/constants";
 
 export interface IUser extends Document {
   clerkId: string;
   email: string;
   name: string;
   avatarUrl?: string;
-  role: "agent" | "manager" | "admin";
+  role: Role;
   agencyId: mongoose.Types.ObjectId;
   phone?: string;
   title?: string;
@@ -20,7 +21,7 @@ const userSchema = new Schema<IUser>(
     avatarUrl: { type: String },
     role: {
       type: String,
-      enum: ["agent", "manager", "admin"],
+      enum: ROLES,
       required: true,
       default: "agent",
     },

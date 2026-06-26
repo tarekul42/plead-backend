@@ -19,6 +19,11 @@ export class QueryBuilder<T> {
     return this;
   }
 
+  wherePrefix(field: string, value: string, options = "i"): this {
+    if (value) this.filter[field] = { $regex: `^${value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, $options: options };
+    return this;
+  }
+
   whereRange(field: string, min?: number, max?: number): this {
     if (min !== undefined || max !== undefined) {
       const range: Record<string, number> = {};
@@ -79,8 +84,8 @@ export class QueryBuilder<T> {
   }
 
   paginate(page?: number, limit?: number, maxLimit = 100, defaultLimit = 20): this {
-    const p = Math.max(1, page || 1);
-    const l = Math.min(maxLimit, Math.max(1, limit || defaultLimit));
+    const p = Math.max(1, Math.floor(page || 1));
+    const l = Math.min(maxLimit, Math.max(1, Math.floor(limit || defaultLimit)));
     this.skipValue = (p - 1) * l;
     this.limitValue = l;
     return this;

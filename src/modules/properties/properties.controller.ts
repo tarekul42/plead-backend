@@ -14,7 +14,7 @@ export const PropertiesController = {
   }),
 
   getBySlug: asyncHandler(async (req: Request, res: Response) => {
-    const property = await PropertiesService.getBySlugPublic(String(req.params.slug));
+    const property = await PropertiesService.getBySlug(String(req.params.slug), req.user!.agencyId);
     if (!property) throw NotFoundError("Property");
     res.json(success(property));
   }),

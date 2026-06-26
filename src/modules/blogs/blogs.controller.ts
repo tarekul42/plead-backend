@@ -10,7 +10,7 @@ export const BlogsController = {
     const { page, limit } = Pagination.from(req.query, 10);
     const { data, total } = await BlogsService.list(
       req.user!.agencyId,
-      req.query.status as string | undefined,
+      typeof req.query.status === "string" ? req.query.status : undefined,
       page,
       limit,
     );

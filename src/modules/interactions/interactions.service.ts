@@ -8,6 +8,10 @@ export const InteractionsService = {
     return InteractionsRepository.listByAgency(agencyId, page, limit);
   },
 
+  async listByUser(userId: string, agencyId: string, page = 1, limit = 50) {
+    return InteractionsRepository.listByUser(userId, agencyId, page, limit);
+  },
+
   async listByLead(leadId: string, agencyId: string, page = 1, limit = 50) {
     return InteractionsRepository.listByLead(leadId, agencyId, page, limit);
   },

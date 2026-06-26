@@ -15,14 +15,14 @@ export const BlogsService = {
   },
 
   async create(data: Partial<IBlog>) {
-    let slug = data.title
+    const agencyId = data.agencyId ? String(data.agencyId) : "";
+    const base = data.title
       ?.toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)+/g, "") || "post";
-    let counter = 0;
-    while (await BlogsRepository.findBySlug(slug, String(data.agencyId))) {
-      counter++;
-      slug = `${slug}-${counter}`;
+    let slug = base;
+    while (agencyId && await BlogsRepository.findBySlug(slug, agencyId)) {
+      slug = `${base}-${Date.now()}`;
     }
     return BlogsRepository.create({ ...data, slug, publishedAt: data.status === "published" ? new Date() : undefined });
   },

@@ -1,6 +1,7 @@
 import { LeadModel, ILead } from "./leads.model";
 import { InteractionModel } from "../interactions/interactions.model";
 import { QueryBuilder } from "../../core/utils/query-builder";
+import { InternalError } from "../../core/utils/app-error";
 
 interface ListParams {
   agencyId: string;
@@ -25,7 +26,7 @@ export const LeadsRepository = {
   },
 
   async findById(id: string, agencyId: string): Promise<ILead | null> {
-    return LeadModel.findOne({ _id: id, agencyId });
+    return LeadModel.findOne({ _id: id, agencyId }).lean();
   },
 
   async create(data: Partial<ILead>): Promise<ILead> {
@@ -37,11 +38,22 @@ export const LeadsRepository = {
   },
 
   async delete(id: string, agencyId: string): Promise<boolean> {
-    const result = await LeadModel.deleteOne({ _id: id, agencyId });
-    return result.deletedCount > 0;
-  },
-
-  async deleteInteractions(leadId: string) {
-    await InteractionModel.deleteMany({ leadId });
+    const session = await LeadModel.startSession();
+    try {
+      session.startTransaction();
+      const result = await LeadModel.deleteOne({ _id: id, agencyId }).session(session);
+      if (result.deletedCount === 0) {
+        await session.abortTransaction();
+        return false;
+      }
+      await InteractionModel.deleteMany({ leadId: id }).session(session);
+      await session.commitTransaction();
+      return true;
+    } catch {
+      await session.abortTransaction();
+      throw InternalError("Failed to delete lead and associated data");
+    } finally {
+      session.endSession();
+    }
   },
 };

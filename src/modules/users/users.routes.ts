@@ -1,19 +1,20 @@
 import { Router } from "express";
-import { usersController } from "./users.controller";
+import { UsersController } from "./users.controller";
 import { requireAuth } from "../../core/middleware/auth.middleware";
 import { StrictRole } from "../../core/middleware/rbac.middleware";
 import { validate } from "../../core/middleware/validate.middleware";
 import { objectId } from "../../core/utils/validation";
 import { z } from "zod";
+import { updateUserSchema } from "./users.validation";
 
 const usersRouter = Router();
 
 usersRouter.use(requireAuth);
 
-usersRouter.get("/me", usersController.getMe);
-usersRouter.get("/", usersController.list);
-usersRouter.get("/:id", validate(z.object({ id: objectId }), "params"), usersController.getById);
-usersRouter.patch("/:id", StrictRole("manager", "admin"), validate(z.object({ id: objectId }), "params"), usersController.update);
-usersRouter.delete("/:id", StrictRole("admin"), validate(z.object({ id: objectId }), "params"), usersController.delete);
+usersRouter.get("/me", UsersController.getMe);
+usersRouter.get("/", UsersController.list);
+usersRouter.get("/:id", validate(z.object({ id: objectId }), "params"), UsersController.getById);
+usersRouter.patch("/:id", StrictRole("manager", "admin"), validate(updateUserSchema), validate(z.object({ id: objectId }), "params"), UsersController.update);
+usersRouter.delete("/:id", StrictRole("admin"), validate(z.object({ id: objectId }), "params"), UsersController.delete);
 
 export { usersRouter };

@@ -8,7 +8,11 @@ import { LeadsService } from "./leads.service";
 export const LeadsController = {
   list: asyncHandler(async (req: Request, res: Response) => {
     const { page, limit } = Pagination.from(req.query, 20);
-    const { data, total } = await LeadsService.list(req.query, req.user!.agencyId);
+    const query = { ...req.query };
+    if (req.user!.role === "agent") {
+      query.assignedAgentId = req.user!.id;
+    }
+    const { data, total } = await LeadsService.list(query, req.user!.agencyId);
     res.json(success(data, Pagination.meta(page, limit, total)));
   }),
 

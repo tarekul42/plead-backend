@@ -10,7 +10,7 @@ export const ReviewsController = {
     const { page, limit } = Pagination.from(req.query, 50, 100);
     const { data, total } = await ReviewsService.listByAgency(
       req.user!.agencyId,
-      req.query.isVerified as string | undefined,
+      typeof req.query.isVerified === "string" ? req.query.isVerified : undefined,
       page,
       limit,
     );
@@ -19,7 +19,9 @@ export const ReviewsController = {
 
   listByProperty: asyncHandler(async (req: Request, res: Response) => {
     const { page, limit } = Pagination.from(req.query, 50, 100);
-    const { data, total } = await ReviewsService.listByProperty(String(req.params.propertyId), req.user!.agencyId, page, limit);
+    const { data, total } = await ReviewsService.listByProperty(
+      String(req.params.propertyId), req.user!.agencyId, page, limit,
+    );
     res.json(success(data, Pagination.meta(page, limit, total)));
   }),
 

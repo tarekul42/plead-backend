@@ -8,19 +8,23 @@ type AuthRequest = Request & { auth?: { userId?: string }; user?: Record<string,
 export const requireAuth = [
   clerkRequireAuth(),
   async (req: AuthRequest, _res: Response, next: NextFunction) => {
-    const clerkUserId = req.auth?.userId;
-    if (!clerkUserId) throw UnauthorizedError("Invalid token");
+    try {
+      const clerkUserId = req.auth?.userId;
+      if (!clerkUserId) throw UnauthorizedError("Invalid token");
 
-    const dbUser = await UsersService.getByClerkId(clerkUserId);
-    if (!dbUser || !dbUser.isActive) throw UnauthorizedError("User not found or inactive");
+      const dbUser = await UsersService.getByClerkId(clerkUserId);
+      if (!dbUser || !dbUser.isActive) throw UnauthorizedError("User not found or inactive");
 
-    req.user = {
-      id: dbUser._id.toString(),
-      clerkId: dbUser.clerkId,
-      email: dbUser.email,
-      role: dbUser.role,
-      agencyId: dbUser.agencyId?.toString() || "",
-    };
-    next();
+      req.user = {
+        id: dbUser._id.toString(),
+        clerkId: dbUser.clerkId,
+        email: dbUser.email,
+        role: dbUser.role,
+        agencyId: dbUser.agencyId?.toString() || "",
+      };
+      next();
+    } catch (err) {
+      next(err);
+    }
   },
 ];

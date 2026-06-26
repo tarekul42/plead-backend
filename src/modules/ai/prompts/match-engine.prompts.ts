@@ -29,7 +29,11 @@ export function buildMatchEngineUserPrompt(lead: {
   propertyType: string;
   features: string[];
 }>) {
-  return JSON.stringify({ lead, properties });
+  try {
+    return JSON.stringify({ lead, properties });
+  } catch {
+    return JSON.stringify({ lead: Object.keys(lead), properties: properties.map(p => p._id) });
+  }
 }
 
 export const matchEngineResponseSchema = {

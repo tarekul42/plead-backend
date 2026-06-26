@@ -2,8 +2,8 @@ import type { PaginationMeta, PaginateParams } from "../types/common.types";
 
 export class Pagination {
   static from(query: Record<string, unknown>, defaultLimit = 20, maxLimit = 100): PaginateParams {
-    const page = Math.max(1, Number(query.page) || 1);
-    const limit = Math.min(maxLimit, Math.max(1, Number(query.limit) || defaultLimit));
+    const page = Math.max(1, Math.floor(Number(query.page) || 1));
+    const limit = Math.min(maxLimit, Math.max(1, Math.floor(Number(query.limit) || defaultLimit)));
     const skip = (page - 1) * limit;
     return { page, limit, skip };
   }
@@ -13,7 +13,7 @@ export class Pagination {
       page,
       limit,
       total,
-      totalPages: Math.ceil(total / limit) || 1,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
     };
   }
 }

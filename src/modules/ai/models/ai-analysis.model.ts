@@ -37,5 +37,6 @@ const aiAnalysisSchema = new Schema<IAiAnalysis>(
 );
 
 aiAnalysisSchema.index({ agencyId: 1, type: 1, createdAt: -1 });
+aiAnalysisSchema.index({ agencyId: 1, createdAt: -1 });
 
 export const AiAnalysisModel = mongoose.model<IAiAnalysis>("AiAnalysis", aiAnalysisSchema);

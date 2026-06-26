@@ -1,5 +1,5 @@
 export { usersRouter } from "./users.routes";
-export { usersController } from "./users.controller";
+export { UsersController } from "./users.controller";
 export { UsersService } from "./users.service";
-export { usersRepository } from "./users.repository";
+export { UsersRepository } from "./users.repository";
 export { UserModel, type IUser } from "./users.model";

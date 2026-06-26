@@ -8,13 +8,17 @@ import { InteractionsService } from "./interactions.service";
 export const InteractionsController = {
   list: asyncHandler(async (req: Request, res: Response) => {
     const { page, limit } = Pagination.from(req.query, 50, 100);
-    const { data, total } = await InteractionsService.listByAgency(req.user!.agencyId, page, limit);
+    const { data, total } = req.user!.role === "agent"
+      ? await InteractionsService.listByUser(req.user!.id, req.user!.agencyId, page, limit)
+      : await InteractionsService.listByAgency(req.user!.agencyId, page, limit);
     res.json(success(data, Pagination.meta(page, limit, total)));
   }),
 
   listByLead: asyncHandler(async (req: Request, res: Response) => {
     const { page, limit } = Pagination.from(req.query, 50, 100);
-    const { data, total } = await InteractionsService.listByLead(String(req.params.leadId), req.user!.agencyId, page, limit);
+    const { data, total } = await InteractionsService.listByLead(
+      String(req.params.leadId), req.user!.agencyId, page, limit,
+    );
     res.json(success(data, Pagination.meta(page, limit, total)));
   }),
 
