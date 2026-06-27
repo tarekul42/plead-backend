@@ -1,7 +1,8 @@
 import { PropertiesRepository } from "./properties.repository";
 import { PropertyModel, IProperty } from "./properties.model";
 import { ReviewModel } from "../reviews/reviews.model";
-import { InternalError } from "../../core/utils/app-error";
+import { UserModel } from "../users/users.model";
+import { InternalError, ValidationError } from "../../core/utils/app-error";
 
 export interface ListQuery {
   q?: string;
@@ -30,6 +31,11 @@ export const PropertiesService = {
   },
 
   async create(data: Partial<IProperty>) {
+    const agentExists = await UserModel.exists({ _id: data.assignedAgentId, agencyId: data.agencyId });
+    if (!agentExists) {
+      throw ValidationError([{ message: "Assigned agent not found in your agency", path: ["assignedAgentId"] }]);
+    }
+
     const base = data.title
       ?.toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
@@ -44,6 +50,14 @@ export const PropertiesService = {
   async update(id: string, agencyId: string, data: Partial<IProperty>) {
     const existing = await PropertiesRepository.findById(id, agencyId);
     if (!existing) return null;
+
+    if (data.assignedAgentId) {
+      const agentExists = await UserModel.exists({ _id: data.assignedAgentId, agencyId });
+      if (!agentExists) {
+        throw ValidationError([{ message: "Assigned agent not found in your agency", path: ["assignedAgentId"] }]);
+      }
+    }
+
     return PropertiesRepository.update(id, agencyId, data);
   },
 

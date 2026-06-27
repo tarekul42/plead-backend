@@ -7,6 +7,7 @@ import { InternalError } from "../../../core/utils/app-error";
 jest.mock("../properties.repository");
 jest.mock("../properties.model");
 jest.mock("../../reviews/reviews.model");
+jest.mock("../../users/users.model");
 
 const MockedRepository = PropertiesRepository as jest.Mocked<typeof PropertiesRepository>;
 const MockedPropertyModel = PropertyModel as jest.Mocked<typeof PropertyModel>;
@@ -43,6 +44,8 @@ function makeProperty(overrides: Partial<IProperty> = {}): IProperty {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  const { UserModel } = jest.requireMock("../../users/users.model");
+  UserModel.exists.mockResolvedValue(true);
 });
 
 describe("PropertiesService.list", () => {
