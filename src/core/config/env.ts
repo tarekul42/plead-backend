@@ -25,6 +25,12 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900000),
   RATE_LIMIT_MAX: z.coerce.number().default(100),
   SENTRY_DSN: z.string().optional(),
+  DEMO_AGENT_EMAIL: z.string().default("agent@proplead.ai"),
+  DEMO_AGENT_PASSWORD: z.string().default("Agent#123!"),
+  DEMO_MANAGER_EMAIL: z.string().default("manager@proplead.ai"),
+  DEMO_MANAGER_PASSWORD: z.string().default("Manager#123!"),
+  DEMO_ADMIN_EMAIL: z.string().default("admin@proplead.ai"),
+  DEMO_ADMIN_PASSWORD: z.string().default("Admin@u#123!"),
 });
 
 export const env = envSchema.parse(process.env);

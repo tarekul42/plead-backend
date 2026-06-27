@@ -68,6 +68,17 @@ app.use(globalRateLimit);
 
 app.get("/favicon.ico", (_req, res) => res.status(204).end());
 
+app.get("/api/v1/demo-credentials", (_req, res) => {
+  res.json({
+    success: true,
+    accounts: [
+      { role: "agent", email: env.DEMO_AGENT_EMAIL, password: env.DEMO_AGENT_PASSWORD },
+      { role: "manager", email: env.DEMO_MANAGER_EMAIL, password: env.DEMO_MANAGER_PASSWORD },
+      { role: "admin", email: env.DEMO_ADMIN_EMAIL, password: env.DEMO_ADMIN_PASSWORD },
+    ],
+  });
+});
+
 app.get("/", (_req, res) => {
   res.json({
     success: true,
