@@ -46,7 +46,7 @@ export const LeadsRepository = {
         await session.abortTransaction();
         return false;
       }
-      await InteractionModel.deleteMany({ leadId: id }).session(session);
+      await InteractionModel.deleteMany({ leadId: id, agencyId }).session(session);
       await session.commitTransaction();
       return true;
     } catch {
