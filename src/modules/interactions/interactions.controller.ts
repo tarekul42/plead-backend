@@ -33,13 +33,13 @@ export const InteractionsController = {
   }),
 
   update: asyncHandler(async (req: Request, res: Response) => {
-    const interaction = await InteractionsService.update(String(req.params.id), req.user!.agencyId, req.body);
+    const interaction = await InteractionsService.update(String(req.params.id), req.user!.agencyId, req.user!.id, req.user!.role, req.body);
     if (!interaction) throw NotFoundError("Interaction");
     res.json(success(interaction));
   }),
 
   delete: asyncHandler(async (req: Request, res: Response) => {
-    const deleted = await InteractionsService.delete(String(req.params.id), req.user!.agencyId);
+    const deleted = await InteractionsService.delete(String(req.params.id), req.user!.agencyId, req.user!.id, req.user!.role);
     if (!deleted) throw NotFoundError("Interaction");
     res.json(success({ deleted: true }));
   }),

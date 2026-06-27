@@ -20,13 +20,17 @@ export const ReviewsService = {
     return ReviewsRepository.create(data);
   },
 
-  async update(id: string, agencyId: string, data: Partial<IReview>) {
+  async update(id: string, agencyId: string, userId: string, role: string, data: Partial<IReview>) {
     const existing = await ReviewsRepository.findById(id, agencyId);
     if (!existing) return null;
+    if (role === "agent" && existing.userId?.toString() !== userId) return null;
     return ReviewsRepository.update(id, agencyId, data);
   },
 
-  async delete(id: string, agencyId: string) {
+  async delete(id: string, agencyId: string, userId: string, role: string) {
+    if (role !== "agent") return ReviewsRepository.delete(id, agencyId);
+    const existing = await ReviewsRepository.findById(id, agencyId);
+    if (!existing || existing.userId?.toString() !== userId) return false;
     return ReviewsRepository.delete(id, agencyId);
   },
 };

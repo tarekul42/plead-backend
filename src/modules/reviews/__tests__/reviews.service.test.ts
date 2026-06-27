@@ -85,7 +85,7 @@ describe("ReviewsService", () => {
       (ReviewsRepository.findById as jest.Mock).mockResolvedValue(mockReview);
       (ReviewsRepository.update as jest.Mock).mockResolvedValue(updated);
 
-      const result = await ReviewsService.update("id1", "agency1", { rating: 4, comment: "Updated comment" });
+      const result = await ReviewsService.update("id1", "agency1", mockReview.userId, "agent", { rating: 4, comment: "Updated comment" });
 
       expect(ReviewsRepository.findById).toHaveBeenCalledWith("id1", "agency1");
       expect(ReviewsRepository.update).toHaveBeenCalledWith("id1", "agency1", { rating: 4, comment: "Updated comment" });
@@ -95,7 +95,7 @@ describe("ReviewsService", () => {
     it("should return null when review not found", async () => {
       (ReviewsRepository.findById as jest.Mock).mockResolvedValue(null);
 
-      const result = await ReviewsService.update("nonexistent", "agency1", { rating: 3 });
+      const result = await ReviewsService.update("nonexistent", "agency1", "user1", "manager", { rating: 3 });
 
       expect(result).toBeNull();
       expect(ReviewsRepository.update).not.toHaveBeenCalled();
@@ -106,7 +106,7 @@ describe("ReviewsService", () => {
     it("should delegate to repository delete", async () => {
       (ReviewsRepository.delete as jest.Mock).mockResolvedValue(true);
 
-      const result = await ReviewsService.delete("id1", "agency1");
+      const result = await ReviewsService.delete("id1", "agency1", "user1", "manager");
 
       expect(ReviewsRepository.delete).toHaveBeenCalledWith("id1", "agency1");
       expect(result).toBe(true);
@@ -115,7 +115,7 @@ describe("ReviewsService", () => {
     it("should return false when review not found", async () => {
       (ReviewsRepository.delete as jest.Mock).mockResolvedValue(false);
 
-      const result = await ReviewsService.delete("nonexistent", "agency1");
+      const result = await ReviewsService.delete("nonexistent", "agency1", "user1", "manager");
 
       expect(result).toBe(false);
     });

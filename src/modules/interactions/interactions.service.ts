@@ -22,13 +22,17 @@ export const InteractionsService = {
     return InteractionsRepository.create(data);
   },
 
-  async update(id: string, agencyId: string, data: Partial<IInteraction>) {
+  async update(id: string, agencyId: string, userId: string, role: string, data: Partial<IInteraction>) {
     const existing = await InteractionsRepository.findById(id, agencyId);
     if (!existing) return null;
+    if (role === "agent" && existing.performedById?.toString() !== userId) return null;
     return InteractionsRepository.update(id, agencyId, data);
   },
 
-  async delete(id: string, agencyId: string) {
+  async delete(id: string, agencyId: string, userId: string, role: string) {
+    if (role !== "agent") return InteractionsRepository.delete(id, agencyId);
+    const existing = await InteractionsRepository.findById(id, agencyId);
+    if (!existing || existing.performedById?.toString() !== userId) return false;
     return InteractionsRepository.delete(id, agencyId);
   },
 };

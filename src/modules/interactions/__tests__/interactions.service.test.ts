@@ -98,7 +98,7 @@ describe("InteractionsService", () => {
       (InteractionsRepository.findById as jest.Mock).mockResolvedValue(mockInteraction);
       (InteractionsRepository.update as jest.Mock).mockResolvedValue(updated);
 
-      const result = await InteractionsService.update("id1", "agency1", { notes: "Updated notes" });
+      const result = await InteractionsService.update("id1", "agency1", mockInteraction.performedById, "agent", { notes: "Updated notes" });
 
       expect(InteractionsRepository.findById).toHaveBeenCalledWith("id1", "agency1");
       expect(InteractionsRepository.update).toHaveBeenCalledWith("id1", "agency1", { notes: "Updated notes" });
@@ -108,7 +108,7 @@ describe("InteractionsService", () => {
     it("should return null when interaction not found", async () => {
       (InteractionsRepository.findById as jest.Mock).mockResolvedValue(null);
 
-      const result = await InteractionsService.update("id1", "agency1", { notes: "Updated" });
+      const result = await InteractionsService.update("id1", "agency1", "user1", "manager", { notes: "Updated" });
 
       expect(result).toBeNull();
       expect(InteractionsRepository.update).not.toHaveBeenCalled();
@@ -119,7 +119,7 @@ describe("InteractionsService", () => {
     it("should delegate to repository delete", async () => {
       (InteractionsRepository.delete as jest.Mock).mockResolvedValue(true);
 
-      const result = await InteractionsService.delete("id1", "agency1");
+      const result = await InteractionsService.delete("id1", "agency1", "user1", "manager");
 
       expect(InteractionsRepository.delete).toHaveBeenCalledWith("id1", "agency1");
       expect(result).toBe(true);
