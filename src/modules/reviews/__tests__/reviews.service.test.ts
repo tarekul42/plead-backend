@@ -3,6 +3,11 @@ import { ReviewsRepository } from "../reviews.repository";
 import { IReview } from "../reviews.model";
 
 jest.mock("../reviews.repository");
+jest.mock("../../properties/properties.model", () => ({
+  PropertyModel: {
+    exists: jest.fn(),
+  },
+}));
 
 const mockReview = {
   _id: "507f1f77bcf86cd799439031",
@@ -18,6 +23,8 @@ const mockReview = {
 describe("ReviewsService", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    const { PropertyModel } = jest.requireMock("../../properties/properties.model");
+    PropertyModel.exists.mockResolvedValue(true);
   });
 
   describe("listByAgency", () => {
