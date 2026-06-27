@@ -22,12 +22,18 @@ describe("AgenciesService", () => {
 
   it("list delegates", async () => {
     repo.findAll.mockResolvedValue({ data: [], total: 0 });
-    expect(await AgenciesService.list(1, 20)).toEqual({ data: [], total: 0 });
+    expect(await AgenciesService.list("agency-id", 1, 20)).toEqual({ data: [], total: 0 });
   });
 
   it("getById delegates", async () => {
     repo.findById.mockResolvedValue({ _id: "abc" });
-    expect(await AgenciesService.getById("abc")).toEqual({ _id: "abc" });
+    expect(await AgenciesService.getById("abc", "abc")).toEqual({ _id: "abc" });
+  });
+
+  it("getById rejects cross-agency access", async () => {
+    await expect(AgenciesService.getById("other-agency", "my-agency")).rejects.toThrow(
+      "You can only access your own agency",
+    );
   });
 
   it("create generates slug", async () => {
@@ -50,11 +56,23 @@ describe("AgenciesService", () => {
 
   it("update delegates", async () => {
     repo.update.mockResolvedValue({ _id: "abc", name: "Updated" });
-    expect(await AgenciesService.update("abc", { name: "Updated" })).toEqual({ _id: "abc", name: "Updated" });
+    expect(await AgenciesService.update("abc", "abc", { name: "Updated" })).toEqual({ _id: "abc", name: "Updated" });
+  });
+
+  it("update rejects cross-agency access", async () => {
+    await expect(AgenciesService.update("other", "mine", { name: "x" })).rejects.toThrow(
+      "You can only modify your own agency",
+    );
   });
 
   it("delete delegates", async () => {
     repo.delete.mockResolvedValue(true);
-    expect(await AgenciesService.delete("abc")).toBe(true);
+    expect(await AgenciesService.delete("abc", "abc")).toBe(true);
+  });
+
+  it("delete rejects cross-agency access", async () => {
+    await expect(AgenciesService.delete("other", "mine")).rejects.toThrow(
+      "You can only delete your own agency",
+    );
   });
 });

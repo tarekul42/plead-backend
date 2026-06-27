@@ -42,7 +42,7 @@ describe("AgenciesController", () => {
     svc.list.mockResolvedValue({ data: [{ id: "a1" }], total: 1 });
 
     await AgenciesController.list(req, res, next);
-    expect(svc.list).toHaveBeenCalledWith(1, 20);
+    expect(svc.list).toHaveBeenCalledWith("agency_1", 1, 20);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
   });
 
@@ -81,7 +81,7 @@ describe("AgenciesController", () => {
     svc.update.mockResolvedValue({ _id: "abc", name: "Updated" });
 
     await AgenciesController.update(req, res, next);
-    expect(svc.update).toHaveBeenCalledWith("abc", { name: "Updated" });
+    expect(svc.update).toHaveBeenCalledWith("abc", "agency_1", { name: "Updated" });
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
   });
 
@@ -100,7 +100,7 @@ describe("AgenciesController", () => {
     svc.delete.mockResolvedValue(true);
 
     await AgenciesController.delete(req, res, next);
-    expect(svc.delete).toHaveBeenCalledWith("abc");
+    expect(svc.delete).toHaveBeenCalledWith("abc", "agency_1");
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
   });
 
