@@ -4,7 +4,7 @@ import { objectId } from "../../core/utils/validation";
 export const createLeadSchema = z.object({
   name: z.string().min(1).max(200),
   email: z.string().email(),
-  phone: z.string().optional(),
+  phone: z.string().regex(/^\+?[\d\s\-().]{7,20}$/, "Invalid phone number").optional(),
   budget: z.number().min(0).optional(),
   preferredLocation: z.string().optional(),
   propertyType: z.string().optional(),
@@ -19,7 +19,7 @@ export const createLeadSchema = z.object({
 export const updateLeadSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   email: z.string().email().optional(),
-  phone: z.string().optional(),
+  phone: z.string().regex(/^\+?[\d\s\-().]{7,20}$/, "Invalid phone number").optional(),
   budget: z.number().min(0).optional(),
   preferredLocation: z.string().optional(),
   propertyType: z.string().optional(),
