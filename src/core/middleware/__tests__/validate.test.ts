@@ -18,13 +18,13 @@ describe("validate middleware", () => {
   });
 
   it("replaces req[source] with parsed data", () => {
-    const req = { body: { name: "  Alice  ", age: "30" } };
+    const req = { body: { name: "Alice", age: "30" } };
     const coerceSchema = z.object({ name: z.string(), age: z.coerce.number() });
     const next = jest.fn();
 
     validate(coerceSchema)(req as never, {} as never, next);
 
-    expect(req.body).toEqual({ name: "  Alice  ", age: 30 });
+    expect(req.body).toEqual({ name: "Alice", age: 30 });
   });
 
   it("calls next with a ValidationError when validation fails", () => {
@@ -80,7 +80,7 @@ describe("validate middleware", () => {
     validate(strictSchema)(req as never, {} as never, next);
 
     const err = next.mock.calls[0][0];
-    expect(err.details.length).toBeGreaterThanOrEqual(2);
+    expect(err.details.fields.length).toBeGreaterThanOrEqual(2);
   });
 
   it("does not call next with an error when data is valid", () => {

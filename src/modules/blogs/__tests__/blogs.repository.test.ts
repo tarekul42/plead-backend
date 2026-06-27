@@ -22,6 +22,13 @@ jest.mock("../blogs.model", () => ({
   },
 }));
 
+jest.mock("../../users/users.model", () => ({
+  UserModel: {
+    find: jest.fn(() => ({ select: jest.fn(() => ({ lean: jest.fn().mockResolvedValue([]) })) })),
+    findById: jest.fn(() => ({ select: jest.fn(() => ({ lean: jest.fn().mockResolvedValue(null) })) })),
+  },
+}));
+
 import { BlogsRepository } from "../blogs.repository";
 
 describe("BlogsRepository", () => {
@@ -37,7 +44,8 @@ describe("BlogsRepository", () => {
 
       expect(mockWhere).toHaveBeenCalledWith("agencyId", "agency_1");
       expect(mockWhere).toHaveBeenCalledWith("status", "published");
-      expect(result).toEqual({ data: [{ id: "1" }], total: 1 });
+      expect(result.data).toEqual([{ id: "1", author: null }]);
+      expect(result.total).toBe(1);
     });
 
     it("handles undefined status (skips where)", async () => {
@@ -56,7 +64,8 @@ describe("BlogsRepository", () => {
       const result = await BlogsRepository.list("agency_1", undefined, 2, 10);
 
       expect(mockPaginate).toHaveBeenCalledWith(2, 10, 100, 10);
-      expect(result).toEqual({ data: [{ id: "2" }], total: 1 });
+      expect(result.data).toEqual([{ id: "2", author: null }]);
+      expect(result.total).toBe(1);
     });
   });
 
@@ -69,7 +78,7 @@ describe("BlogsRepository", () => {
 
       const result = await BlogsRepository.findBySlug("hello-world", "agency_1");
 
-      expect(result).toEqual(doc);
+      expect(result).toEqual({ ...doc, author: null });
     });
   });
 
@@ -82,7 +91,7 @@ describe("BlogsRepository", () => {
 
       const result = await BlogsRepository.findById("abc", "agency_1");
 
-      expect(result).toEqual(doc);
+      expect(result).toEqual({ ...doc, author: null });
     });
 
     it("returns null", async () => {

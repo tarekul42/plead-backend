@@ -29,6 +29,13 @@ jest.mock("../properties.model", () => ({
   },
 }));
 
+jest.mock("../../users/users.model", () => ({
+  UserModel: {
+    find: jest.fn(() => ({ select: jest.fn(() => ({ lean: jest.fn().mockResolvedValue([]) })) })),
+    findById: jest.fn(() => ({ select: jest.fn(() => ({ lean: jest.fn().mockResolvedValue(null) })) })),
+  },
+}));
+
 import { PropertiesRepository } from "../properties.repository";
 
 describe("PropertiesRepository", () => {
@@ -76,15 +83,16 @@ describe("PropertiesRepository", () => {
     });
 
     it("returns paginated data", async () => {
-      const expected = { data: [{ id: "1", title: "Property" }], total: 1 };
-      mockQbExec.mockResolvedValue(expected);
+      const rawData = [{ id: "1", title: "Property" }];
+      mockQbExec.mockResolvedValue({ data: rawData, total: 1 });
 
       const result = await PropertiesRepository.list({
         agencyId: "ag1",
         page: 1,
         limit: 12,
       });
-      expect(result).toEqual(expected);
+      expect(result.data).toEqual(rawData.map(d => ({ ...d, assignedAgent: null })));
+      expect(result.total).toBe(1);
     });
   });
 
@@ -231,7 +239,7 @@ describe("PropertiesRepository", () => {
         status: "available",
         price: { $gte: 210000, $lte: 390000 },
       });
-      expect(result).toEqual(related);
+      expect(result).toEqual(related.map(r => ({ ...r, assignedAgent: null })));
     });
 
     it("returns empty array when property not found", async () => {

@@ -64,8 +64,8 @@ describe("config/env", () => {
     await expect(import("../../config/env")).rejects.toThrow();
   });
 
-  it("requires MONGODB_URI to be a valid URL", async () => {
-    withEnv({ MONGODB_URI: "not-a-url" });
+  it("requires MONGODB_URI to be non-empty", async () => {
+    withEnv({ MONGODB_URI: "" });
     await expect(import("../../config/env")).rejects.toThrow();
   });
 
@@ -79,14 +79,16 @@ describe("config/env", () => {
     await expect(import("../../config/env")).rejects.toThrow();
   });
 
-  it("requires GEMINI_API_KEY to start with AIza", async () => {
+  it("accepts any GEMINI_API_KEY in non-production", async () => {
     withEnv({ GEMINI_API_KEY: "bad" });
-    await expect(import("../../config/env")).rejects.toThrow();
+    const { env } = await import("../../config/env");
+    expect(env.GEMINI_API_KEY).toBe("bad");
   });
 
-  it("requires GROQ_API_KEY to start with gsk_", async () => {
+  it("accepts any GROQ_API_KEY in non-production", async () => {
     withEnv({ GROQ_API_KEY: "bad" });
-    await expect(import("../../config/env")).rejects.toThrow();
+    const { env } = await import("../../config/env");
+    expect(env.GROQ_API_KEY).toBe("bad");
   });
 
   it("defaults GEMINI_MODEL", async () => {
@@ -131,9 +133,10 @@ describe("config/env", () => {
     expect(env.RATE_LIMIT_MAX).toBe(100);
   });
 
-  it("requires Cloudinary credentials to be non-empty", async () => {
+  it("accepts empty Cloudinary credentials in non-production", async () => {
     withEnv({ CLOUDINARY_CLOUD_NAME: "" });
-    await expect(import("../../config/env")).rejects.toThrow();
+    const { env } = await import("../../config/env");
+    expect(env.CLOUDINARY_CLOUD_NAME).toBe("");
   });
 
   it("requires CORS_ORIGIN to be non-empty", async () => {

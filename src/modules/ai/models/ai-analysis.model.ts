@@ -11,6 +11,7 @@ export interface IAiAnalysis extends Document {
   durationMs: number;
   success: boolean;
   errorMessage?: string;
+  inputHash?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -32,11 +33,14 @@ const aiAnalysisSchema = new Schema<IAiAnalysis>(
     durationMs: { type: Number, default: 0 },
     success: { type: Boolean, required: true },
     errorMessage: { type: String },
+    inputHash: { type: String },
   },
   { timestamps: true },
 );
 
 aiAnalysisSchema.index({ agencyId: 1, type: 1, createdAt: -1 });
 aiAnalysisSchema.index({ agencyId: 1, createdAt: -1 });
+aiAnalysisSchema.index({ inputHash: 1, createdAt: -1 });
+aiAnalysisSchema.index({ agencyId: 1, inputHash: 1, createdAt: -1 });
 
 export const AiAnalysisModel = mongoose.model<IAiAnalysis>("AiAnalysis", aiAnalysisSchema);

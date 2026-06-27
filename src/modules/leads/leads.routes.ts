@@ -9,6 +9,7 @@ const leadsRouter = Router();
 
 leadsRouter.use(requireAuth);
 
+leadsRouter.get("/stats", LeadsController.stats);
 leadsRouter.get("/", validate(listLeadsQuerySchema, "query"), LeadsController.list);
 leadsRouter.get("/:id", validate(leadParamSchema, "params"), LeadsController.getById);
 leadsRouter.post("/", StrictRole("agent", "manager", "admin"), validate(createLeadSchema), LeadsController.create);

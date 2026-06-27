@@ -42,7 +42,7 @@ describe("InteractionsController", () => {
     const req = mockReq(); const res = mockRes(); const next = jest.fn();
     svc.listByAgency.mockResolvedValue({ data: [], total: 0 });
     await InteractionsController.list(req, res, next);
-    expect(svc.listByAgency).toHaveBeenCalledWith("agency_1", 1, 50);
+    expect(svc.listByAgency).toHaveBeenCalledWith("agency_1", 1, 50, undefined, undefined, undefined, undefined);
   });
 
   it("list uses listByUser for agent role", async () => {
@@ -50,7 +50,7 @@ describe("InteractionsController", () => {
     const res = mockRes(); const next = jest.fn();
     svc.listByUser.mockResolvedValue({ data: [], total: 0 });
     await InteractionsController.list(req, res, next);
-    expect(svc.listByUser).toHaveBeenCalledWith("user_1", "agency_1", 1, 50);
+    expect(svc.listByUser).toHaveBeenCalledWith("user_1", "agency_1", 1, 50, undefined, undefined, undefined);
   });
 
   it("listByLead returns paginated interactions", async () => {

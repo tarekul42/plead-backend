@@ -11,6 +11,7 @@ export interface IBlog extends Document {
   authorId: mongoose.Types.ObjectId;
   publishedAt?: Date;
   status: "draft" | "published";
+  author?: { _id: unknown; name: string; avatarUrl?: string } | null;
   createdAt: Date;
   updatedAt: Date;
 }

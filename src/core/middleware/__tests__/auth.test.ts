@@ -12,7 +12,7 @@ jest.mock("../../../modules/users", () => ({
 }));
 
 const { UsersService } = jest.requireMock("../../../modules/users");
-const { requireAuth } = jest.requireActual("../auth.middleware");
+const { requireAuth, clearUserCache } = jest.requireActual("../auth.middleware");
 
 function mockReq(auth?: { userId?: string }) {
   return {
@@ -29,6 +29,7 @@ function mockRes() {
 describe("requireAuth middleware", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    clearUserCache();
   });
 
   it("sets req.user when auth is valid and user exists", async () => {

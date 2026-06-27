@@ -31,7 +31,7 @@ describe("InteractionsService", () => {
 
       const result = await InteractionsService.listByAgency("agency1");
 
-      expect(InteractionsRepository.listByAgency).toHaveBeenCalledWith("agency1", 1, 50);
+      expect(InteractionsRepository.listByAgency).toHaveBeenCalledWith("agency1", 1, 50, undefined, undefined, undefined, undefined);
       expect(result).toEqual(listResult);
     });
 
@@ -40,7 +40,7 @@ describe("InteractionsService", () => {
 
       await InteractionsService.listByAgency("agency1", 2, 25);
 
-      expect(InteractionsRepository.listByAgency).toHaveBeenCalledWith("agency1", 2, 25);
+      expect(InteractionsRepository.listByAgency).toHaveBeenCalledWith("agency1", 2, 25, undefined, undefined, undefined, undefined);
     });
   });
 
@@ -51,7 +51,7 @@ describe("InteractionsService", () => {
 
       const result = await InteractionsService.listByUser("userId", "agency1");
 
-      expect(InteractionsRepository.listByUser).toHaveBeenCalledWith("userId", "agency1", 1, 50);
+      expect(InteractionsRepository.listByUser).toHaveBeenCalledWith("userId", "agency1", 1, 50, undefined, undefined, undefined);
       expect(result).toEqual(listResult);
     });
   });

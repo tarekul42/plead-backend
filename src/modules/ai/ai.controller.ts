@@ -21,4 +21,9 @@ export const AiController = {
     const result = await AiService.generateOutreachEmail(leadId, propertyId, tone, req.user!.id, req.user!.agencyId);
     res.json(success(result));
   }),
+
+  getUsage: asyncHandler(async (req: Request, res: Response) => {
+    const usage = await AiService.getUsage(req.user!.agencyId, req.user!.id, req.user!.role);
+    res.json(success(usage));
+  }),
 };

@@ -44,6 +44,15 @@ export const AdminService = {
     return user;
   },
 
+  async changeRole(userId: string, agencyId: string, newRole: string) {
+    const user = await UserModel.findOneAndUpdate(
+      { _id: userId, agencyId },
+      { role: newRole },
+      { new: true },
+    );
+    return user;
+  },
+
   async getRecentAiAnalytics(agencyId: string, limit = 20) {
     return AiAnalysisModel.find({ agencyId })
       .sort({ createdAt: -1 })

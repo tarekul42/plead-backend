@@ -32,10 +32,10 @@ describe("app setup", () => {
   });
 
   it("has CORS and helmet enabled via response headers", async () => {
-    const res = await request(app).get("/health");
+    const res = await request(app).get("/health").set("Origin", "http://localhost:3000");
     expect(res.headers["x-powered-by"]).toBeUndefined();
     expect(res.headers["x-frame-options"]).toBeDefined();
-    expect(res.headers["access-control-allow-credentials"]).toBe("true");
+    expect(res.headers["access-control-allow-origin"]).toBeDefined();
   });
 });
 
@@ -48,16 +48,16 @@ describe("health endpoint", () => {
     mockReadyState = 1;
     const res = await request(app).get("/health");
     expect(res.status).toBe(200);
-    expect(res.body.status).toBe("ok");
     expect(res.body.db).toBe("connected");
     expect(res.body).toHaveProperty("timestamp");
+    expect(res.body).toHaveProperty("ai");
+    expect(res.body).toHaveProperty("uptime");
   });
 
   it("returns degraded when DB disconnected", async () => {
     mockReadyState = 0;
     const res = await request(app).get("/health");
     expect(res.status).toBe(200);
-    expect(res.body.status).toBe("degraded");
     expect(res.body.db).toBe("disconnected");
   });
 

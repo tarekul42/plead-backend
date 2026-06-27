@@ -2,16 +2,19 @@ import { PropertiesService, ListQuery } from "../properties.service";
 import { PropertiesRepository } from "../properties.repository";
 import { PropertyModel, IProperty } from "../properties.model";
 import { ReviewModel } from "../../reviews/reviews.model";
+import { AiGeneratedCopyModel } from "../../ai/models/ai-copy.model";
 import { InternalError } from "../../../core/utils/app-error";
 
 jest.mock("../properties.repository");
 jest.mock("../properties.model");
 jest.mock("../../reviews/reviews.model");
 jest.mock("../../users/users.model");
+jest.mock("../../ai/models/ai-copy.model");
 
 const MockedRepository = PropertiesRepository as jest.Mocked<typeof PropertiesRepository>;
 const MockedPropertyModel = PropertyModel as jest.Mocked<typeof PropertyModel>;
 const MockedReviewModel = ReviewModel as jest.Mocked<typeof ReviewModel>;
+const MockedAiCopyModel = AiGeneratedCopyModel as jest.Mocked<typeof AiGeneratedCopyModel>;
 
 const AGENCY_ID = "64b7f0c2e1a2b3c4d5e6f701";
 const PROPERTY_ID = "64b7f0c2e1a2b3c4d5e6f702";
@@ -209,6 +212,8 @@ describe("PropertiesService.delete", () => {
     MockedPropertyModel.deleteOne.mockReturnValue(deleteQuery as never);
     const reviewQuery = mockQuery(Promise.resolve({ deletedCount: 2 }));
     MockedReviewModel.deleteMany.mockReturnValue(reviewQuery as never);
+    const aiCopyQuery = mockQuery(Promise.resolve({ deletedCount: 1 }));
+    MockedAiCopyModel.deleteMany.mockReturnValue(aiCopyQuery as never);
 
     const result = await PropertiesService.delete(PROPERTY_ID, AGENCY_ID);
 
@@ -222,6 +227,11 @@ describe("PropertiesService.delete", () => {
       agencyId: AGENCY_ID,
     });
     expect(reviewQuery.session).toHaveBeenCalledWith(session);
+    expect(MockedAiCopyModel.deleteMany).toHaveBeenCalledWith({
+      propertyId: PROPERTY_ID,
+      agencyId: AGENCY_ID,
+    });
+    expect(aiCopyQuery.session).toHaveBeenCalledWith(session);
     expect(session.commitTransaction).toHaveBeenCalled();
     expect(session.endSession).toHaveBeenCalled();
   });

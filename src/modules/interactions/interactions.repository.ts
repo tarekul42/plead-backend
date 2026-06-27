@@ -2,18 +2,35 @@ import { InteractionModel, IInteraction } from "./interactions.model";
 import { QueryBuilder } from "../../core/utils/query-builder";
 
 export const InteractionsRepository = {
-  async listByAgency(agencyId: string, page = 1, limit = 50) {
-    return new QueryBuilder(InteractionModel)
+  async listByAgency(agencyId: string, page = 1, limit = 50, type?: string, leadId?: string, startDate?: string, endDate?: string) {
+    const builder = new QueryBuilder(InteractionModel)
       .where("agencyId", agencyId)
+      .where("type", type)
+      .where("leadId", leadId);
+    if (startDate || endDate) {
+      const range: Record<string, Date> = {};
+      if (startDate) range.$gte = new Date(startDate);
+      if (endDate) range.$lte = new Date(endDate);
+      builder.where("createdAt", range as unknown as string);
+    }
+    return builder
       .sortDesc("createdAt")
       .paginate(page, limit, 100, 50)
       .exec();
   },
 
-  async listByUser(userId: string, agencyId: string, page = 1, limit = 50) {
-    return new QueryBuilder(InteractionModel)
+  async listByUser(userId: string, agencyId: string, page = 1, limit = 50, type?: string, startDate?: string, endDate?: string) {
+    const builder = new QueryBuilder(InteractionModel)
       .where("agencyId", agencyId)
       .where("performedById", userId)
+      .where("type", type);
+    if (startDate || endDate) {
+      const range: Record<string, Date> = {};
+      if (startDate) range.$gte = new Date(startDate);
+      if (endDate) range.$lte = new Date(endDate);
+      builder.where("createdAt", range as unknown as string);
+    }
+    return builder
       .sortDesc("createdAt")
       .paginate(page, limit, 100, 50)
       .exec();

@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { objectId } from "../../core/utils/validation";
 
+const leadStatusEnum = z.enum(["new", "contacted", "qualified", "negotiating", "closed", "lost"]);
+
+function normalizeLeadStatus(val: string | undefined): string | undefined {
+  if (val === "won") return "closed";
+  return val;
+}
+
 export const createLeadSchema = z.object({
   name: z.string().min(1).max(200),
   email: z.string().email(),
@@ -11,7 +18,7 @@ export const createLeadSchema = z.object({
   bedsDesired: z.number().min(0).optional(),
   bathsDesired: z.number().min(0).optional(),
   notes: z.string().optional(),
-  status: z.enum(["new", "contacted", "qualified", "negotiating", "closed", "lost"]).optional(),
+  status: z.union([leadStatusEnum, z.literal("won")]).optional().transform(v => normalizeLeadStatus(v)),
   source: z.string().optional(),
   assignedAgentId: objectId,
 });
@@ -26,13 +33,13 @@ export const updateLeadSchema = z.object({
   bedsDesired: z.number().min(0).optional(),
   bathsDesired: z.number().min(0).optional(),
   notes: z.string().optional(),
-  status: z.enum(["new", "contacted", "qualified", "negotiating", "closed", "lost"]).optional(),
+  status: z.union([leadStatusEnum, z.literal("won")]).optional().transform(v => normalizeLeadStatus(v)),
   source: z.string().optional(),
   assignedAgentId: objectId.optional(),
 });
 
 export const listLeadsQuerySchema = z.object({
-  status: z.enum(["new", "contacted", "qualified", "negotiating", "closed", "lost"]).optional(),
+  status: z.union([leadStatusEnum, z.literal("won")]).optional().transform(v => normalizeLeadStatus(v)),
   assignedAgentId: objectId.optional(),
   q: z.string().optional(),
   page: z.coerce.number().default(1),

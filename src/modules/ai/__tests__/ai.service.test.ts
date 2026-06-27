@@ -34,11 +34,15 @@ jest.mock("../../../core/utils/safe-error", () => ({ getErrorMessage: (e: any) =
 
 jest.mock("mongoose", () => {
   const ObjectId = jest.fn((id: string) => id) as any;
+  const mockSchemaInstance = { index: jest.fn() };
+  const Schema = jest.fn(() => mockSchemaInstance) as any;
+  Schema.Types = { ObjectId, Mixed: Object };
   const mMongoose = {
     Types: { ObjectId },
+    Schema,
     connections: [{ readyState: 1 }],
     connection: { readyState: 1, on: jest.fn(), close: jest.fn() },
-    model: jest.fn(),
+    model: jest.fn(() => ({ deleteMany: jest.fn(() => ({ session: jest.fn() })), create: jest.fn() })),
   };
   return mMongoose;
 });
@@ -84,16 +88,15 @@ describe("AiService", () => {
       expect(mockCacheSet).toHaveBeenCalled();
     });
 
-    it("persists failed analysis on AI error", async () => {
-      mockLeadFindOne.mockReturnValue({ lean: jest.fn().mockResolvedValue({ _id: "lead_1" }) });
-      mockPropertyFind.mockReturnValue({ lean: jest.fn().mockResolvedValue([{ _id: "prop_1" }]) });
+    it("returns rule-based fallback when AI fails", async () => {
+      mockLeadFindOne.mockReturnValue({ lean: jest.fn().mockResolvedValue({ _id: "lead_1", budget: 500000 }) });
+      mockPropertyFind.mockReturnValue({ lean: jest.fn().mockResolvedValue([{ _id: "prop_1", title: "House", price: 400000, location: "NYC", beds: 3, baths: 2, area: 1500, propertyType: "house", features: ["garage"] }]) });
       mockCacheGet.mockResolvedValue(undefined);
       mockCallAI.mockRejectedValue(new Error("AI down"));
 
-      await expect(AiService.matchLeadProperties("lead_1", undefined, "user_1", "ag_1")).rejects.toThrow();
-      expect(mockAnalyzeCreate).toHaveBeenCalledWith(
-        expect.objectContaining({ success: false, errorMessage: "Error: AI down" }),
-      );
+      const result = await AiService.matchLeadProperties("lead_1", undefined, "user_1", "ag_1");
+      expect(result.matches).toBeDefined();
+      expect(Array.isArray(result.matches)).toBe(true);
     });
   });
 

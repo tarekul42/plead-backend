@@ -1,4 +1,5 @@
 import { PropertyModel, IProperty } from "./properties.model";
+import { UserModel } from "../users/users.model";
 import { QueryBuilder } from "../../core/utils/query-builder";
 
 interface ListParams {
@@ -15,8 +16,26 @@ interface ListParams {
   limit: number;
 }
 
+async function populateAgent(property: IProperty | null): Promise<IProperty | null> {
+  if (!property) return property;
+  if (property.assignedAgentId) {
+    const agent = await UserModel.findById(property.assignedAgentId).select("name email avatarUrl").lean();
+    return { ...property, assignedAgent: agent || null } as unknown as IProperty;
+  }
+  return property;
+}
+
+async function populateAgentList(properties: IProperty[]): Promise<IProperty[]> {
+  const agentIds = [...new Set(properties.map(p => p.assignedAgentId?.toString()).filter(Boolean))];
+  const agents = await UserModel.find({ _id: { $in: agentIds } }).select("name email avatarUrl").lean();
+  const agentMap: Record<string, unknown> = {};
+  for (const a of agents) agentMap[a._id.toString()] = a;
+  return properties.map(p => ({ ...p, assignedAgent: agentMap[p.assignedAgentId?.toString()] || null }) as unknown as IProperty);
+}
+
 async function findById(id: string, agencyId: string): Promise<IProperty | null> {
-  return PropertyModel.findOne({ _id: id, agencyId }).lean();
+  const property = await PropertyModel.findOne({ _id: id, agencyId }).lean();
+  return populateAgent(property);
 }
 
 const sortMap: Record<string, string> = {
@@ -39,11 +58,14 @@ export const PropertiesRepository = {
       .sortBy(sortMap, params.sort)
       .paginate(params.page, params.limit, 100, 12);
 
-    return builder.exec();
+    const { data, total } = await builder.exec();
+    const enriched = await populateAgentList(data);
+    return { data: enriched, total };
   },
 
-  findBySlug(slug: string, agencyId: string) {
-    return PropertyModel.findOne({ slug, agencyId }).lean();
+  async findBySlug(slug: string, agencyId: string): Promise<IProperty | null> {
+    const property = await PropertyModel.findOne({ slug, agencyId }).lean();
+    return populateAgent(property);
   },
 
   findById,
@@ -65,7 +87,7 @@ export const PropertiesRepository = {
     const property = await findById(propertyId, agencyId);
     if (!property) return [];
 
-    return PropertyModel.find({
+    const properties = await PropertyModel.find({
       _id: { $ne: propertyId },
       agencyId,
       propertyType: property.propertyType,
@@ -78,5 +100,7 @@ export const PropertiesRepository = {
       .sort({ publishedAt: -1 })
       .limit(limit)
       .lean();
+
+    return populateAgentList(properties);
   },
 };

@@ -35,8 +35,20 @@ export const LeadsController = {
   }),
 
   delete: asyncHandler(async (req: Request, res: Response) => {
+    const lead = await LeadsService.getById(String(req.params.id), req.user!.agencyId);
+    if (!lead) throw NotFoundError("Lead");
+    if (req.user!.role === "agent" && lead.assignedAgentId?.toString() !== req.user!.id) throw NotFoundError("Lead");
     const deleted = await LeadsService.delete(String(req.params.id), req.user!.agencyId);
     if (!deleted) throw NotFoundError("Lead");
     res.json(success({ deleted: true }));
+  }),
+
+  stats: asyncHandler(async (req: Request, res: Response) => {
+    const filter: { agencyId: string; assignedAgentId?: string } = { agencyId: req.user!.agencyId };
+    if (req.user!.role === "agent") {
+      filter.assignedAgentId = req.user!.id;
+    }
+    const stats = await LeadsService.getStats(filter);
+    res.json(success(stats));
   }),
 };

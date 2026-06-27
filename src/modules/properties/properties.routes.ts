@@ -7,10 +7,10 @@ import { createPropertySchema, updatePropertySchema, listPropertiesQuerySchema, 
 
 const propertiesRouter = Router();
 
-propertiesRouter.get("/", requireAuth, validate(listPropertiesQuerySchema, "query"), PropertiesController.list);
-propertiesRouter.get("/id/:id", requireAuth, validate(propertyParamSchema, "params"), PropertiesController.getById);
-propertiesRouter.get("/:id/related", requireAuth, validate(propertyParamSchema, "params"), PropertiesController.related);
-propertiesRouter.get("/:slug", requireAuth, validate(propertySlugParamSchema, "params"), PropertiesController.getBySlug);
+propertiesRouter.get("/", validate(listPropertiesQuerySchema, "query"), PropertiesController.list);
+propertiesRouter.get("/id/:id", validate(propertyParamSchema, "params"), PropertiesController.getById);
+propertiesRouter.get("/:id/related", validate(propertyParamSchema, "params"), PropertiesController.related);
+propertiesRouter.get("/:slug", validate(propertySlugParamSchema, "params"), PropertiesController.getBySlug);
 propertiesRouter.post("/", requireAuth, StrictRole("manager", "admin"), validate(createPropertySchema), PropertiesController.create);
 propertiesRouter.patch("/:id", requireAuth, StrictRole("manager", "admin"), validate(updatePropertySchema), validate(propertyParamSchema, "params"), PropertiesController.update);
 propertiesRouter.delete("/:id", requireAuth, StrictRole("manager", "admin"), validate(propertyParamSchema, "params"), PropertiesController.delete);

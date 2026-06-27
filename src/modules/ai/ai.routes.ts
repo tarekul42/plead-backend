@@ -36,4 +36,6 @@ aiRouter.post(
   AiController.generateOutreachEmail,
 );
 
+aiRouter.get("/usage", StrictRole("agent", "manager", "admin"), AiController.getUsage);
+
 export { aiRouter };

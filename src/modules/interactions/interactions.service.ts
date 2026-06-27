@@ -4,12 +4,12 @@ import { LeadModel } from "../leads/leads.model";
 import { NotFoundError } from "../../core/utils/app-error";
 
 export const InteractionsService = {
-  async listByAgency(agencyId: string, page = 1, limit = 50) {
-    return InteractionsRepository.listByAgency(agencyId, page, limit);
+  async listByAgency(agencyId: string, page = 1, limit = 50, type?: string, leadId?: string, startDate?: string, endDate?: string) {
+    return InteractionsRepository.listByAgency(agencyId, page, limit, type, leadId, startDate, endDate);
   },
 
-  async listByUser(userId: string, agencyId: string, page = 1, limit = 50) {
-    return InteractionsRepository.listByUser(userId, agencyId, page, limit);
+  async listByUser(userId: string, agencyId: string, page = 1, limit = 50, type?: string, startDate?: string, endDate?: string) {
+    return InteractionsRepository.listByUser(userId, agencyId, page, limit, type, startDate, endDate);
   },
 
   async listByLead(leadId: string, agencyId: string, page = 1, limit = 50) {

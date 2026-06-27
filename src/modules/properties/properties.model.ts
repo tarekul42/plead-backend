@@ -23,6 +23,7 @@ export interface IProperty extends Document {
   views: number;
   inquiriesCount: number;
   publishedAt?: Date;
+  assignedAgent?: { _id: unknown; name: string; email: string; avatarUrl?: string } | null;
   createdAt: Date;
   updatedAt: Date;
 }

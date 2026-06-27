@@ -6,21 +6,25 @@ import { Pagination } from "../../core/utils/pagination";
 import { PropertiesService } from "./properties.service";
 import type { ListQuery } from "./properties.service";
 
+function getAgencyId(req: Request): string {
+  return (req.query.agencyId as string) || req.user?.agencyId || "";
+}
+
 export const PropertiesController = {
   list: asyncHandler(async (req: Request, res: Response) => {
     const { page, limit } = Pagination.from(req.query, 12);
-    const { data, total } = await PropertiesService.list(req.query as unknown as ListQuery, req.user!.agencyId);
+    const { data, total } = await PropertiesService.list(req.query as unknown as ListQuery, getAgencyId(req));
     res.json(success(data, Pagination.meta(page, limit, total)));
   }),
 
   getBySlug: asyncHandler(async (req: Request, res: Response) => {
-    const property = await PropertiesService.getBySlug(String(req.params.slug), req.user!.agencyId);
+    const property = await PropertiesService.getBySlug(String(req.params.slug), getAgencyId(req));
     if (!property) throw NotFoundError("Property");
     res.json(success(property));
   }),
 
   getById: asyncHandler(async (req: Request, res: Response) => {
-    const property = await PropertiesService.getById(String(req.params.id), req.user!.agencyId);
+    const property = await PropertiesService.getById(String(req.params.id), getAgencyId(req));
     if (!property) throw NotFoundError("Property");
     res.json(success(property));
   }),
@@ -43,7 +47,7 @@ export const PropertiesController = {
   }),
 
   related: asyncHandler(async (req: Request, res: Response) => {
-    const related = await PropertiesService.getRelated(String(req.params.id), req.user!.agencyId);
+    const related = await PropertiesService.getRelated(String(req.params.id), getAgencyId(req));
     res.json(success(related));
   }),
 };

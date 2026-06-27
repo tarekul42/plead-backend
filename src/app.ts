@@ -19,6 +19,26 @@ import { agenciesRouter } from "./modules/agencies";
 import { webhooksRouter } from "./modules/webhooks";
 import { usersRouter } from "./modules/users";
 
+import { GeminiProvider } from "./modules/ai/providers/gemini.provider";
+import { GroqProvider } from "./modules/ai/providers/groq.provider";
+
+let healthCache: { status: string; expiresAt: number } | null = null;
+const HEALTH_CACHE_TTL = 30_000;
+
+async function getAIProviderHealth() {
+  const now = Date.now();
+  if (healthCache && healthCache.expiresAt > now) return healthCache.status;
+  const gemini = new GeminiProvider();
+  const groq = new GroqProvider();
+  const [geminiHealthy, groqHealthy] = await Promise.all([
+    gemini.isHealthy().catch(() => false),
+    groq.isHealthy().catch(() => false),
+  ]);
+  const status = geminiHealthy || groqHealthy ? "healthy" : "degraded";
+  healthCache = { status, expiresAt: now + HEALTH_CACHE_TTL };
+  return status;
+}
+
 const app = express();
 
 app.set("trust proxy", 1);
@@ -29,7 +49,6 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes("*")) return cb(null, true);
     cb(null, false);
   },
-  credentials: true,
 }));
 app.use(helmet());
 
@@ -47,10 +66,20 @@ app.use((req, res, next) => {
 });
 app.use(globalRateLimit);
 
-app.get("/health", (_req, res) => {
+app.get("/health", async (_req, res) => {
   const dbState = mongoose.connection.readyState;
   const dbStatus = ["disconnected", "connected", "connecting", "disconnecting"][dbState] || "unknown";
-  res.json({ status: dbState === 1 ? "ok" : "degraded", db: dbStatus, timestamp: Date.now() });
+
+  const aiStatus = await getAIProviderHealth();
+
+  res.json({
+    status: dbState === 1 && aiStatus === "healthy" ? "ok" : "degraded",
+    db: dbStatus,
+    ai: { status: aiStatus, primary: env.AI_PROVIDER_PRIMARY, fallback: env.AI_PROVIDER_FALLBACK },
+    timestamp: Date.now(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage().rss,
+  });
 });
 
 app.use("/api/v1/agencies", agenciesRouter);

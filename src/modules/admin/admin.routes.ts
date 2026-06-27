@@ -14,6 +14,7 @@ adminRouter.use(StrictRole("admin"));
 adminRouter.get("/stats", AdminController.getAgencyStats);
 adminRouter.get("/users", AdminController.listUsers);
 adminRouter.patch("/users/:id/toggle-status", validate(z.object({ id: objectId }), "params"), AdminController.toggleUserStatus);
+adminRouter.patch("/users/:id/role", validate(z.object({ id: objectId }), "params"), AdminController.changeRole);
 adminRouter.get("/ai-analytics", AdminController.getAiAnalytics);
 
 export { adminRouter };

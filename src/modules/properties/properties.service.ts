@@ -2,6 +2,7 @@ import { PropertiesRepository } from "./properties.repository";
 import { PropertyModel, IProperty } from "./properties.model";
 import { ReviewModel } from "../reviews/reviews.model";
 import { UserModel } from "../users/users.model";
+import { AiGeneratedCopyModel } from "../ai/models/ai-copy.model";
 import { InternalError, ValidationError } from "../../core/utils/app-error";
 
 export interface ListQuery {
@@ -71,6 +72,7 @@ export const PropertiesService = {
         return false;
       }
       await ReviewModel.deleteMany({ propertyId: id, agencyId }).session(session);
+      await AiGeneratedCopyModel.deleteMany({ propertyId: id, agencyId }).session(session);
       await session.commitTransaction();
       return true;
     } catch {
