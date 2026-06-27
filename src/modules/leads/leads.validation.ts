@@ -31,6 +31,14 @@ export const updateLeadSchema = z.object({
   assignedAgentId: objectId.optional(),
 });
 
+export const listLeadsQuerySchema = z.object({
+  status: z.enum(["new", "contacted", "qualified", "negotiating", "closed", "lost"]).optional(),
+  assignedAgentId: objectId.optional(),
+  q: z.string().optional(),
+  page: z.coerce.number().default(1),
+  limit: z.coerce.number().default(20),
+});
+
 export const leadParamSchema = z.object({
   id: objectId,
 });
