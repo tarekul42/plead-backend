@@ -36,10 +36,12 @@ export const AdminService = {
   },
 
   async toggleUserStatus(userId: string, agencyId: string) {
-    const user = await UserModel.findOne({ _id: userId, agencyId });
-    if (!user) return null;
-    user.isActive = !user.isActive;
-    return user.save();
+    const user = await UserModel.findOneAndUpdate(
+      { _id: userId, agencyId },
+      [{ $set: { isActive: { $not: "$isActive" } } }],
+      { new: true },
+    );
+    return user;
   },
 
   async getRecentAiAnalytics(agencyId: string, limit = 20) {
