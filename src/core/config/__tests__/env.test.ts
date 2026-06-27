@@ -1,30 +1,155 @@
-jest.mock("dotenv", () => ({ config: jest.fn() }));
+describe("config/env", () => {
+  const originalEnv = process.env;
 
-describe("env config", () => {
-  const OLD_ENV = { ...process.env };
+  beforeEach(() => {
+    jest.resetModules();
+    process.env = { ...originalEnv };
+  });
 
   afterAll(() => {
-    process.env = OLD_ENV;
+    process.env = originalEnv;
   });
 
-  it("exports env with default values", () => {
-    jest.resetModules();
-    const { env } = require("../env");
+  function withEnv(overrides: Record<string, string | undefined>) {
+    process.env = {
+      ...originalEnv,
+      NODE_ENV: "test",
+      MONGODB_URI: "mongodb://localhost:27017/test",
+      CLERK_SECRET_KEY: "sk_test_dummy",
+      CLERK_WEBHOOK_SECRET: "whsec_dummy",
+      GEMINI_API_KEY: "AIza_dummy",
+      GROQ_API_KEY: "gsk_dummy",
+      CLOUDINARY_CLOUD_NAME: "dummy",
+      CLOUDINARY_API_KEY: "dummy",
+      CLOUDINARY_API_SECRET: "dummy",
+      CORS_ORIGIN: "*",
+      ...overrides,
+    };
+  }
+
+  it("parses a valid environment", async () => {
+    withEnv({});
+    const { env } = await import("../../config/env");
     expect(env.PORT).toBe(8080);
     expect(env.NODE_ENV).toBe("test");
+    expect(env.MONGODB_URI).toBe("mongodb://localhost:27017/test");
   });
 
-  it("fails validation when CLERK_SECRET_KEY has wrong prefix", () => {
-    jest.resetModules();
-    process.env.CLERK_SECRET_KEY = "bad_prefix";
-    expect(() => require("../env")).toThrow();
-    process.env.CLERK_SECRET_KEY = OLD_ENV.CLERK_SECRET_KEY;
+  it("coerces PORT to a number", async () => {
+    withEnv({ PORT: "4000" });
+    const { env } = await import("../../config/env");
+    expect(env.PORT).toBe(4000);
   });
 
-  it("fails validation when MONGODB_URI is invalid", () => {
+  it("defaults PORT to 8080 when unset", async () => {
+    withEnv({ PORT: undefined });
+    const { env } = await import("../../config/env");
+    expect(env.PORT).toBe(8080);
+  });
+
+  it("defaults NODE_ENV to development when unset", async () => {
+    withEnv({ NODE_ENV: undefined });
+    const { env } = await import("../../config/env");
+    expect(env.NODE_ENV).toBe("development");
+  });
+
+  it("accepts production NODE_ENV", async () => {
+    withEnv({ NODE_ENV: "production" });
+    const { env } = await import("../../config/env");
+    expect(env.NODE_ENV).toBe("production");
+  });
+
+  it("rejects an invalid NODE_ENV", async () => {
+    withEnv({ NODE_ENV: "staging" });
+    await expect(import("../../config/env")).rejects.toThrow();
+  });
+
+  it("requires MONGODB_URI to be a valid URL", async () => {
+    withEnv({ MONGODB_URI: "not-a-url" });
+    await expect(import("../../config/env")).rejects.toThrow();
+  });
+
+  it("requires CLERK_SECRET_KEY to start with sk_", async () => {
+    withEnv({ CLERK_SECRET_KEY: "bad" });
+    await expect(import("../../config/env")).rejects.toThrow();
+  });
+
+  it("requires CLERK_WEBHOOK_SECRET to start with whsec_", async () => {
+    withEnv({ CLERK_WEBHOOK_SECRET: "bad" });
+    await expect(import("../../config/env")).rejects.toThrow();
+  });
+
+  it("requires GEMINI_API_KEY to start with AIza", async () => {
+    withEnv({ GEMINI_API_KEY: "bad" });
+    await expect(import("../../config/env")).rejects.toThrow();
+  });
+
+  it("requires GROQ_API_KEY to start with gsk_", async () => {
+    withEnv({ GROQ_API_KEY: "bad" });
+    await expect(import("../../config/env")).rejects.toThrow();
+  });
+
+  it("defaults GEMINI_MODEL", async () => {
+    withEnv({});
+    const { env } = await import("../../config/env");
+    expect(env.GEMINI_MODEL).toBe("gemini-1.5-flash");
+  });
+
+  it("defaults GROQ_MODEL", async () => {
+    withEnv({});
+    const { env } = await import("../../config/env");
+    expect(env.GROQ_MODEL).toBe("llama-3.1-8b-instant");
+  });
+
+  it("defaults AI providers", async () => {
+    withEnv({});
+    const { env } = await import("../../config/env");
+    expect(env.AI_PROVIDER_PRIMARY).toBe("gemini");
+    expect(env.AI_PROVIDER_FALLBACK).toBe("groq");
+  });
+
+  it("rejects an invalid AI_PROVIDER_PRIMARY", async () => {
+    withEnv({ AI_PROVIDER_PRIMARY: "openai" });
+    await expect(import("../../config/env")).rejects.toThrow();
+  });
+
+  it("coerces AI_CACHE_TTL_HOURS to a number with a default of 24", async () => {
+    withEnv({ AI_CACHE_TTL_HOURS: "12" });
+    const { env } = await import("../../config/env");
+    expect(env.AI_CACHE_TTL_HOURS).toBe(12);
+
     jest.resetModules();
-    process.env.MONGODB_URI = "not-a-url";
-    expect(() => require("../env")).toThrow();
-    process.env.MONGODB_URI = OLD_ENV.MONGODB_URI;
+    withEnv({ AI_CACHE_TTL_HOURS: undefined });
+    const { env: env2 } = await import("../../config/env");
+    expect(env2.AI_CACHE_TTL_HOURS).toBe(24);
+  });
+
+  it("coerces rate limit values to numbers with defaults", async () => {
+    withEnv({});
+    const { env } = await import("../../config/env");
+    expect(env.RATE_LIMIT_WINDOW_MS).toBe(900000);
+    expect(env.RATE_LIMIT_MAX).toBe(100);
+  });
+
+  it("requires Cloudinary credentials to be non-empty", async () => {
+    withEnv({ CLOUDINARY_CLOUD_NAME: "" });
+    await expect(import("../../config/env")).rejects.toThrow();
+  });
+
+  it("requires CORS_ORIGIN to be non-empty", async () => {
+    withEnv({ CORS_ORIGIN: "" });
+    await expect(import("../../config/env")).rejects.toThrow();
+  });
+
+  it("makes SENTRY_DSN optional", async () => {
+    withEnv({ SENTRY_DSN: undefined });
+    const { env } = await import("../../config/env");
+    expect(env.SENTRY_DSN).toBeUndefined();
+  });
+
+  it("accepts a provided SENTRY_DSN", async () => {
+    withEnv({ SENTRY_DSN: "https://example@sentry.io/123" });
+    const { env } = await import("../../config/env");
+    expect(env.SENTRY_DSN).toBe("https://example@sentry.io/123");
   });
 });

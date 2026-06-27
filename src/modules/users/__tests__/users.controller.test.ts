@@ -1,169 +1,201 @@
-import { Request, Response } from "express";
 import { UsersController } from "../users.controller";
+import { UsersService } from "../users.service";
+import { AppError } from "../../../core/utils/app-error";
 
-jest.mock("../users.service", () => ({
-  UsersService: {
-    getById: jest.fn(),
-    listByAgency: jest.fn(),
-    updateById: jest.fn(),
-    update: jest.fn(),
-  },
-}));
+jest.mock("../users.service");
 
-function mockReq(overrides: Partial<Request> = {}): Request {
+const mockUser = {
+  _id: "507f1f77bcf86cd799439011",
+  clerkId: "clerk_123",
+  email: "john@example.com",
+  name: "John Doe",
+  role: "agent",
+  agencyId: "507f1f77bcf86cd799439012",
+  isActive: true,
+};
+
+function mockRes() {
+  const res: Record<string, jest.Mock> = {};
+  res.json = jest.fn().mockReturnValue(res);
+  res.status = jest.fn().mockReturnValue(res);
+  return res as unknown as import("express").Response;
+}
+
+function mockReq(overrides: Record<string, unknown> = {}) {
   return {
-    user: { id: "user_1", agencyId: "agency_1", role: "admin", clerkId: "clerk_1", email: "a@b.com" },
     params: {},
     query: {},
     body: {},
+    user: { id: "507f1f77bcf86cd799439011", agencyId: "507f1f77bcf86cd799439012" },
     ...overrides,
-  } as Request;
-}
-
-function mockRes() {
-  const res: Partial<Response> = {};
-  res.json = jest.fn().mockReturnValue(res);
-  return res as Response;
+  } as unknown as import("express").Request;
 }
 
 describe("UsersController", () => {
-  let mockService: Record<string, jest.Mock>;
-
   beforeEach(() => {
-    mockService = jest.requireMock("../users.service").UsersService;
     jest.clearAllMocks();
   });
 
   describe("list", () => {
-    it("returns paginated users list", async () => {
-      const req = mockReq({ query: { page: "1", limit: "10" } });
+    it("should return paginated users for the agency", async () => {
+      const listResult = { data: [mockUser], total: 1 };
+      (UsersService.listByAgency as jest.Mock).mockResolvedValue(listResult);
+
+      const req = mockReq({ query: { page: "1", limit: "50" } });
       const res = mockRes();
       const next = jest.fn();
 
-      mockService.listByAgency.mockResolvedValue({ data: [{ id: "1", name: "John" }], total: 1 });
-
       await UsersController.list(req, res, next);
 
-      expect(mockService.listByAgency).toHaveBeenCalledWith("agency_1", 1, 10);
+      expect(UsersService.listByAgency).toHaveBeenCalledWith("507f1f77bcf86cd799439012", 1, 50);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
-          data: [{ id: "1", name: "John" }],
-          meta: expect.objectContaining({ page: 1, limit: 10, total: 1 }),
+          data: [mockUser],
+          meta: expect.objectContaining({ page: 1, limit: 50, total: 1 }),
         }),
       );
+      expect(next).not.toHaveBeenCalled();
     });
   });
 
   describe("getMe", () => {
-    it("returns current user", async () => {
+    it("should return the current user", async () => {
+      (UsersService.getById as jest.Mock).mockResolvedValue(mockUser);
+
       const req = mockReq();
       const res = mockRes();
       const next = jest.fn();
 
-      mockService.getById.mockResolvedValue({ id: "user_1", name: "John" });
-
       await UsersController.getMe(req, res, next);
 
-      expect(mockService.getById).toHaveBeenCalledWith("user_1");
+      expect(UsersService.getById).toHaveBeenCalledWith("507f1f77bcf86cd799439011");
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ success: true, data: { id: "user_1", name: "John" } }),
+        expect.objectContaining({ success: true, data: mockUser }),
       );
     });
   });
 
   describe("getById", () => {
-    it("returns user by id", async () => {
-      const req = mockReq({ params: { id: "abc" } });
+    it("should return user if same agency", async () => {
+      (UsersService.getById as jest.Mock).mockResolvedValue(mockUser);
+
+      const req = mockReq({ params: { id: "507f1f77bcf86cd799439011" } });
       const res = mockRes();
       const next = jest.fn();
 
-      mockService.getById.mockResolvedValue({ _id: "abc", agencyId: "agency_1" });
-
       await UsersController.getById(req, res, next);
 
-      expect(next).not.toHaveBeenCalled();
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true, data: mockUser }),
+      );
     });
 
-    it("calls next with error when user not in agency", async () => {
-      const req = mockReq({ params: { id: "abc" } });
+    it("should throw NotFoundError if user not found", async () => {
+      (UsersService.getById as jest.Mock).mockResolvedValue(null);
+
+      const req = mockReq({ params: { id: "nonexistent" } });
       const res = mockRes();
       const next = jest.fn();
 
-      mockService.getById.mockResolvedValue({ _id: "abc", agencyId: "other_agency" });
+      await UsersController.getById(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(AppError));
+      expect((next as jest.Mock).mock.calls[0][0].statusCode).toBe(404);
+    });
+
+    it("should throw NotFoundError if user belongs to different agency", async () => {
+      (UsersService.getById as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        agencyId: "507f1f77bcf86cd799439099",
+      });
+
+      const req = mockReq({ params: { id: "507f1f77bcf86cd799439011" } });
+      const res = mockRes();
+      const next = jest.fn();
 
       await UsersController.getById(req, res, next);
 
-      expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 404 }));
+      expect(next).toHaveBeenCalledWith(expect.any(AppError));
+      expect((next as jest.Mock).mock.calls[0][0].statusCode).toBe(404);
     });
   });
 
   describe("update", () => {
-    it("updates user and returns it", async () => {
-      const req = mockReq({ params: { id: "abc" }, body: { name: "Updated" } });
+    it("should update and return user", async () => {
+      const updated = { ...mockUser, title: "Senior Agent" };
+      (UsersService.updateById as jest.Mock).mockResolvedValue(updated);
+
+      const req = mockReq({ params: { id: "507f1f77bcf86cd799439011" }, body: { title: "Senior Agent" } });
       const res = mockRes();
       const next = jest.fn();
 
-      mockService.updateById.mockResolvedValue({ _id: "abc", name: "Updated" });
-
       await UsersController.update(req, res, next);
 
-      expect(mockService.updateById).toHaveBeenCalledWith("abc", "agency_1", { name: "Updated" });
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+      expect(UsersService.updateById).toHaveBeenCalledWith("507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012", { title: "Senior Agent" });
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true, data: updated }),
+      );
     });
 
-    it("calls next with error when update returns null", async () => {
-      const req = mockReq({ params: { id: "abc" } });
+    it("should throw NotFoundError if update returns null", async () => {
+      (UsersService.updateById as jest.Mock).mockResolvedValue(null);
+
+      const req = mockReq({ params: { id: "nonexistent" }, body: { title: "Senior Agent" } });
       const res = mockRes();
       const next = jest.fn();
 
-      mockService.updateById.mockResolvedValue(null);
-
       await UsersController.update(req, res, next);
 
-      expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 404 }));
+      expect(next).toHaveBeenCalledWith(expect.any(AppError));
+      expect((next as jest.Mock).mock.calls[0][0].statusCode).toBe(404);
     });
   });
 
   describe("delete", () => {
-    it("deactivates user", async () => {
-      const req = mockReq({ params: { id: "abc" } });
+    it("should soft-delete user by setting isActive to false", async () => {
+      (UsersService.getById as jest.Mock).mockResolvedValue(mockUser);
+      (UsersService.update as jest.Mock).mockResolvedValue({ ...mockUser, isActive: false });
+
+      const req = mockReq({ params: { id: "507f1f77bcf86cd799439011" } });
       const res = mockRes();
       const next = jest.fn();
 
-      mockService.getById.mockResolvedValue({ _id: "abc", agencyId: "agency_1", clerkId: "clerk_abc" });
-      mockService.update.mockResolvedValue({ _id: "abc", isActive: false });
-
       await UsersController.delete(req, res, next);
 
-      expect(mockService.getById).toHaveBeenCalledWith("abc");
-      expect(mockService.update).toHaveBeenCalledWith("clerk_abc", { isActive: false });
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+      expect(UsersService.update).toHaveBeenCalledWith("clerk_123", { isActive: false });
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true, data: { deleted: true } }),
+      );
     });
 
-    it("calls next with error when user not found", async () => {
-      const req = mockReq({ params: { id: "abc" } });
+    it("should throw NotFoundError if user not found", async () => {
+      (UsersService.getById as jest.Mock).mockResolvedValue(null);
+
+      const req = mockReq({ params: { id: "nonexistent" } });
       const res = mockRes();
       const next = jest.fn();
 
-      mockService.getById.mockResolvedValue(null);
-
       await UsersController.delete(req, res, next);
 
-      expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 404 }));
+      expect(next).toHaveBeenCalledWith(expect.any(AppError));
+      expect((next as jest.Mock).mock.calls[0][0].statusCode).toBe(404);
     });
 
-    it("calls next with error when user not in agency", async () => {
-      const req = mockReq({ params: { id: "abc" } });
+    it("should throw NotFoundError if user belongs to different agency", async () => {
+      (UsersService.getById as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        agencyId: "507f1f77bcf86cd799439099",
+      });
+
+      const req = mockReq({ params: { id: "507f1f77bcf86cd799439011" } });
       const res = mockRes();
       const next = jest.fn();
 
-      mockService.getById.mockResolvedValue({ _id: "abc", agencyId: "other_agency" });
-
       await UsersController.delete(req, res, next);
 
-      expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 404 }));
+      expect(next).toHaveBeenCalledWith(expect.any(AppError));
+      expect((next as jest.Mock).mock.calls[0][0].statusCode).toBe(404);
     });
   });
 });

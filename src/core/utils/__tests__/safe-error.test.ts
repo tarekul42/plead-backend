@@ -1,61 +1,92 @@
-import { getErrorMessage, getErrorCode } from "../safe-error";
+import { getErrorMessage, getErrorCode } from "../../utils/safe-error";
 
-describe("getErrorMessage", () => {
-  it("returns Error instance message", () => {
-    expect(getErrorMessage(new Error("Something broke"))).toBe("Something broke");
+describe("safe-error", () => {
+  describe("getErrorMessage", () => {
+    it("returns the message of an Error instance", () => {
+      expect(getErrorMessage(new Error("boom"))).toBe("boom");
+    });
+
+    it("returns the message of a subclassed error", () => {
+      class CustomError extends Error {}
+      expect(getErrorMessage(new CustomError("custom"))).toBe("custom");
+    });
+
+    it("stringifies a number", () => {
+      expect(getErrorMessage(42)).toBe("42");
+    });
+
+    it("stringifies a string", () => {
+      expect(getErrorMessage("plain string")).toBe("plain string");
+    });
+
+    it("stringifies an object", () => {
+      expect(getErrorMessage({ a: 1 })).toBe("[object Object]");
+    });
+
+    it("stringifies null", () => {
+      expect(getErrorMessage(null)).toBe("null");
+    });
+
+    it("stringifies undefined", () => {
+      expect(getErrorMessage(undefined)).toBe("undefined");
+    });
+
+    it("returns the fallback for an empty string", () => {
+      expect(getErrorMessage("", "fallback")).toBe("fallback");
+    });
+
+    it("uses the default fallback when none is provided", () => {
+      expect(getErrorMessage("")).toBe("Unknown error");
+    });
+
+    it("does not use the fallback for a non-empty string", () => {
+      expect(getErrorMessage("real", "fallback")).toBe("real");
+    });
+
+    it("does not use the fallback for an Error with an empty message", () => {
+      expect(getErrorMessage(new Error(""))).toBe("");
+    });
   });
 
-  it("returns stringified primitive", () => {
-    expect(getErrorMessage("just a string")).toBe("just a string");
-    expect(getErrorMessage(42)).toBe("42");
-  });
+  describe("getErrorCode", () => {
+    it("returns the code when err is an object with a numeric code", () => {
+      expect(getErrorCode({ code: 11000 })).toBe(11000);
+    });
 
-  it("returns fallback for null", () => {
-    expect(getErrorMessage(null)).toBe("null");
-  });
+    it("returns undefined when err is an Error without a code", () => {
+      expect(getErrorCode(new Error("boom"))).toBeUndefined();
+    });
 
-  it("returns undefined as string", () => {
-    expect(getErrorMessage(undefined)).toBe("undefined");
-  });
+    it("returns undefined when err is null", () => {
+      expect(getErrorCode(null)).toBeUndefined();
+    });
 
-  it("returns custom fallback", () => {
-    expect(getErrorMessage(null, "Oops")).toBe("null");
-  });
+    it("returns undefined when err is undefined", () => {
+      expect(getErrorCode(undefined)).toBeUndefined();
+    });
 
-  it("handles Error with empty message", () => {
-    expect(getErrorMessage(new Error(""))).toBe("");
-  });
+    it("returns undefined for a primitive string", () => {
+      expect(getErrorCode("string")).toBeUndefined();
+    });
 
-  it("handles object with custom toString", () => {
-    const obj = { toString: () => "custom string" };
-    expect(getErrorMessage(obj)).toBe("custom string");
-  });
+    it("returns undefined for a primitive number", () => {
+      expect(getErrorCode(42)).toBeUndefined();
+    });
 
-  it("handles object without custom toString", () => {
-    const obj = { foo: "bar" };
-    expect(getErrorMessage(obj)).toBe("[object Object]");
-  });
-});
+    it("returns the code value regardless of its type", () => {
+      // The implementation only checks for the presence of the "code" key,
+      // so a string code is returned as-is.
+      expect(getErrorCode({ code: "11000" })).toBe("11000");
+    });
 
-describe("getErrorCode", () => {
-  it("returns code from object with code property", () => {
-    expect(getErrorCode({ code: 11000 })).toBe(11000);
-  });
+    it("returns 0 when code is 0", () => {
+      expect(getErrorCode({ code: 0 })).toBe(0);
+    });
 
-  it("returns undefined for primitive values", () => {
-    expect(getErrorCode("error")).toBeUndefined();
-    expect(getErrorCode(42)).toBeUndefined();
-  });
-
-  it("returns undefined for object without code property", () => {
-    expect(getErrorCode({ message: "error" })).toBeUndefined();
-  });
-
-  it("returns undefined for null", () => {
-    expect(getErrorCode(null)).toBeUndefined();
-  });
-
-  it("returns undefined for undefined", () => {
-    expect(getErrorCode(undefined)).toBeUndefined();
+    it("returns the code from an Error subclass with a code property", () => {
+      const err = new Error("boom") as Error & { code: number };
+      err.code = 42;
+      expect(getErrorCode(err)).toBe(42);
+    });
   });
 });

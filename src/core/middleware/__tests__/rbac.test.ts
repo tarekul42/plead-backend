@@ -1,55 +1,78 @@
-import { Request, Response } from "express";
-import { StrictRole } from "../rbac.middleware";
+import { StrictRole } from "../../middleware/rbac.middleware";
 
-function mockReq(user?: Record<string, string>) {
-  return { user } as Request;
-}
-
-function mockRes() {
-  const res: Partial<Response> = {};
-  res.status = jest.fn().mockReturnValue(res);
-  res.json = jest.fn().mockReturnValue(res);
-  return res as unknown as Response;
-}
-
-describe("StrictRole", () => {
-  it("calls next() when user has required role", () => {
-    const req = mockReq({ role: "admin", id: "1" });
-    const res = mockRes();
+describe("rbac middleware (StrictRole)", () => {
+  it("calls next without error when the user has an allowed role", () => {
+    const req = { user: { id: "1", role: "admin" } };
     const next = jest.fn();
 
-    StrictRole("admin")(req, res, next);
+    StrictRole("admin", "manager")(req as never, {} as never, next);
+
+    expect(next).toHaveBeenCalledWith();
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it("is case-sensitive on role names", () => {
+    const req = { user: { id: "1", role: "Admin" } };
+    const next = jest.fn();
+
+    StrictRole("admin")(req as never, {} as never, next);
+
+    const err = next.mock.calls[0][0];
+    expect(err.code).toBe("FORBIDDEN");
+  });
+
+  it("calls next with ForbiddenError when the role is not allowed", () => {
+    const req = { user: { id: "1", role: "agent" } };
+    const next = jest.fn();
+
+    StrictRole("admin")(req as never, {} as never, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    const err = next.mock.calls[0][0];
+    expect(err.statusCode).toBe(403);
+    expect(err.code).toBe("FORBIDDEN");
+    expect(err.message).toBe("Insufficient role");
+  });
+
+  it("calls next with ForbiddenError when req.user is missing", () => {
+    const req = {};
+    const next = jest.fn();
+
+    StrictRole("admin")(req as never, {} as never, next);
+
+    const err = next.mock.calls[0][0];
+    expect(err.statusCode).toBe(403);
+    expect(err.code).toBe("FORBIDDEN");
+    expect(err.message).toBe("Not authenticated");
+  });
+
+  it("allows a single role", () => {
+    const req = { user: { id: "1", role: "manager" } };
+    const next = jest.fn();
+
+    StrictRole("manager")(req as never, {} as never, next);
 
     expect(next).toHaveBeenCalledWith();
   });
 
-  it("calls next with ForbiddenError when role does not match", () => {
-    const req = mockReq({ role: "agent", id: "1" });
-    const res = mockRes();
+  it("works with no allowed roles defined (denies everyone)", () => {
+    const req = { user: { id: "1", role: "admin" } };
     const next = jest.fn();
 
-    StrictRole("admin")(req, res, next);
+    StrictRole()(req as never, {} as never, next);
 
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 403, code: "FORBIDDEN" }));
+    const err = next.mock.calls[0][0];
+    expect(err.code).toBe("FORBIDDEN");
   });
 
-  it("calls next with ForbiddenError when user is not authenticated", () => {
-    const req = mockReq(undefined);
-    const res = mockRes();
+  it("does not modify req or res", () => {
+    const req = { user: { id: "1", role: "admin" } };
+    const res = { status: jest.fn() };
     const next = jest.fn();
 
-    StrictRole("admin")(req, res, next);
+    StrictRole("admin")(req as never, res as never, next);
 
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 403 }));
-  });
-
-  it("accepts multiple roles", () => {
-    const req = mockReq({ role: "manager", id: "1" });
-    const res = mockRes();
-    const next = jest.fn();
-
-    StrictRole("admin", "manager")(req, res, next);
-
-    expect(next).toHaveBeenCalledWith();
+    expect(req).toEqual({ user: { id: "1", role: "admin" } });
+    expect(res.status).not.toHaveBeenCalled();
   });
 });

@@ -1,72 +1,128 @@
-jest.mock("../interactions.repository", () => ({
-  InteractionsRepository: {
-    listByAgency: jest.fn(),
-    listByUser: jest.fn(),
-    listByLead: jest.fn(),
-    create: jest.fn(),
-    findById: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-  },
+import { InteractionsService } from "../interactions.service";
+import { InteractionsRepository } from "../interactions.repository";
+import { IInteraction } from "../interactions.model";
+import { LeadModel } from "../../leads/leads.model";
+import { AppError } from "../../../core/utils/app-error";
+
+jest.mock("../interactions.repository");
+jest.mock("../../leads/leads.model", () => ({
+  LeadModel: { exists: jest.fn() },
 }));
 
-jest.mock("../interactions.model", () => ({}));
-
-const mockExists = jest.fn();
-jest.mock("../../leads/leads.model", () => ({ LeadModel: { exists: mockExists } }));
-
-import { InteractionsService } from "../interactions.service";
+const mockInteraction = {
+  _id: "507f1f77bcf86cd799439021",
+  agencyId: "507f1f77bcf86cd799439012",
+  leadId: "507f1f77bcf86cd799439013",
+  type: "call",
+  subject: "Follow-up call",
+  notes: "Discussed pricing",
+  performedById: "507f1f77bcf86cd799439011",
+};
 
 describe("InteractionsService", () => {
-  let repo: Record<string, jest.Mock>;
   beforeEach(() => {
-    repo = jest.requireMock("../interactions.repository").InteractionsRepository;
     jest.clearAllMocks();
   });
 
-  it("listByAgency delegates", async () => {
-    repo.listByAgency.mockResolvedValue({ data: [], total: 0 });
-    expect(await InteractionsService.listByAgency("ag_1", 1, 50)).toEqual({ data: [], total: 0 });
+  describe("listByAgency", () => {
+    it("should return paginated interactions for agency", async () => {
+      const listResult = { data: [mockInteraction], total: 1 };
+      (InteractionsRepository.listByAgency as jest.Mock).mockResolvedValue(listResult);
+
+      const result = await InteractionsService.listByAgency("agency1");
+
+      expect(InteractionsRepository.listByAgency).toHaveBeenCalledWith("agency1", 1, 50);
+      expect(result).toEqual(listResult);
+    });
+
+    it("should pass page and limit", async () => {
+      (InteractionsRepository.listByAgency as jest.Mock).mockResolvedValue({ data: [], total: 0 });
+
+      await InteractionsService.listByAgency("agency1", 2, 25);
+
+      expect(InteractionsRepository.listByAgency).toHaveBeenCalledWith("agency1", 2, 25);
+    });
   });
 
-  it("listByUser delegates", async () => {
-    repo.listByUser.mockResolvedValue({ data: [], total: 0 });
-    expect(await InteractionsService.listByUser("user_1", "ag_1", 1, 50)).toEqual({ data: [], total: 0 });
+  describe("listByUser", () => {
+    it("should return paginated interactions for user", async () => {
+      const listResult = { data: [mockInteraction], total: 1 };
+      (InteractionsRepository.listByUser as jest.Mock).mockResolvedValue(listResult);
+
+      const result = await InteractionsService.listByUser("userId", "agency1");
+
+      expect(InteractionsRepository.listByUser).toHaveBeenCalledWith("userId", "agency1", 1, 50);
+      expect(result).toEqual(listResult);
+    });
   });
 
-  it("listByLead delegates", async () => {
-    repo.listByLead.mockResolvedValue({ data: [], total: 0 });
-    expect(await InteractionsService.listByLead("lead_1", "ag_1", 1, 50)).toEqual({ data: [], total: 0 });
+  describe("listByLead", () => {
+    it("should return paginated interactions for lead", async () => {
+      const listResult = { data: [mockInteraction], total: 1 };
+      (InteractionsRepository.listByLead as jest.Mock).mockResolvedValue(listResult);
+
+      const result = await InteractionsService.listByLead("leadId", "agency1");
+
+      expect(InteractionsRepository.listByLead).toHaveBeenCalledWith("leadId", "agency1", 1, 50);
+      expect(result).toEqual(listResult);
+    });
   });
 
-  it("create validates lead exists", async () => {
-    mockExists.mockResolvedValue(true);
-    repo.create.mockResolvedValue({ _id: "new" });
-    const result = await InteractionsService.create({ leadId: "lead_1", agencyId: "ag_1" } as any);
-    expect(result).toEqual({ _id: "new" });
+  describe("create", () => {
+    it("should create interaction when lead exists", async () => {
+      (LeadModel.exists as jest.Mock).mockResolvedValue({ _id: "leadId" });
+      (InteractionsRepository.create as jest.Mock).mockResolvedValue(mockInteraction);
+
+      const data = { leadId: "leadId", agencyId: "agency1", type: "call" as const, performedById: "userId" } as unknown as Partial<IInteraction>;
+      const result = await InteractionsService.create(data);
+
+      expect(LeadModel.exists).toHaveBeenCalledWith({ _id: "leadId", agencyId: "agency1" });
+      expect(InteractionsRepository.create).toHaveBeenCalledWith(data);
+      expect(result).toEqual(mockInteraction);
+    });
+
+    it("should throw NotFoundError when lead does not exist", async () => {
+      (LeadModel.exists as jest.Mock).mockResolvedValue(null);
+
+      const data = { leadId: "badLead", agencyId: "agency1", type: "call" as const, performedById: "userId" } as unknown as Partial<IInteraction>;
+
+      await expect(InteractionsService.create(data)).rejects.toThrow(AppError);
+      await expect(InteractionsService.create(data)).rejects.toMatchObject({ statusCode: 404 });
+      expect(InteractionsRepository.create).not.toHaveBeenCalled();
+    });
   });
 
-  it("create throws when lead not found", async () => {
-    mockExists.mockResolvedValue(false);
-    await expect(InteractionsService.create({ leadId: "lead_1", agencyId: "ag_1" } as any)).rejects.toThrow();
+  describe("update", () => {
+    it("should update interaction when it exists", async () => {
+      const updated = { ...mockInteraction, notes: "Updated notes" };
+      (InteractionsRepository.findById as jest.Mock).mockResolvedValue(mockInteraction);
+      (InteractionsRepository.update as jest.Mock).mockResolvedValue(updated);
+
+      const result = await InteractionsService.update("id1", "agency1", { notes: "Updated notes" });
+
+      expect(InteractionsRepository.findById).toHaveBeenCalledWith("id1", "agency1");
+      expect(InteractionsRepository.update).toHaveBeenCalledWith("id1", "agency1", { notes: "Updated notes" });
+      expect(result).toEqual(updated);
+    });
+
+    it("should return null when interaction not found", async () => {
+      (InteractionsRepository.findById as jest.Mock).mockResolvedValue(null);
+
+      const result = await InteractionsService.update("id1", "agency1", { notes: "Updated" });
+
+      expect(result).toBeNull();
+      expect(InteractionsRepository.update).not.toHaveBeenCalled();
+    });
   });
 
-  it("update returns null when not found", async () => {
-    repo.findById.mockResolvedValue(null);
-    expect(await InteractionsService.update("abc", "ag_1", {})).toBeNull();
-  });
+  describe("delete", () => {
+    it("should delegate to repository delete", async () => {
+      (InteractionsRepository.delete as jest.Mock).mockResolvedValue(true);
 
-  it("update delegates when found", async () => {
-    repo.findById.mockResolvedValue({ _id: "abc" });
-    repo.update.mockResolvedValue({ _id: "abc", notes: "Updated" });
+      const result = await InteractionsService.delete("id1", "agency1");
 
-    const result = await InteractionsService.update("abc", "ag_1", { notes: "Updated" });
-    expect(repo.update).toHaveBeenCalledWith("abc", "ag_1", { notes: "Updated" });
-    expect(result).toEqual({ _id: "abc", notes: "Updated" });
-  });
-
-  it("delete delegates", async () => {
-    repo.delete.mockResolvedValue(true);
-    expect(await InteractionsService.delete("abc", "ag_1")).toBe(true);
+      expect(InteractionsRepository.delete).toHaveBeenCalledWith("id1", "agency1");
+      expect(result).toBe(true);
+    });
   });
 });

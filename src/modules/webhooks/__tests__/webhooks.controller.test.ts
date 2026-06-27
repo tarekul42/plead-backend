@@ -9,29 +9,21 @@ jest.mock("../../../core/config/env", () => ({
   env: { CLERK_WEBHOOK_SECRET: "whsec_dummy" },
 }));
 
-const mockHandleUserCreated = jest.fn();
-const mockHandleUserUpdated = jest.fn();
-const mockHandleUserDeleted = jest.fn();
 jest.mock("../webhooks.service", () => ({
   WebhooksService: {
-    handleUserCreated: mockHandleUserCreated,
-    handleUserUpdated: mockHandleUserUpdated,
-    handleUserDeleted: mockHandleUserDeleted,
+    handleUserCreated: jest.fn(),
+    handleUserUpdated: jest.fn(),
+    handleUserDeleted: jest.fn(),
   },
 }));
-
-jest.mock("../../../core/utils/logger", () => ({ logger: { info: jest.fn(), error: jest.fn() } }));
 
 import { WebhooksController } from "../webhooks.controller";
 
 function mockReq(overrides: Partial<Request> = {}): Request {
   return {
-    headers: {
-      "svix-id": "svix_id",
-      "svix-timestamp": "1234567890",
-      "svix-signature": "v1,signature",
-    },
-    body: Buffer.from('{"type":"user.created","data":{"id":"clerk_1","email_addresses":[{"email_address":"a@b.com"}],"public_metadata":{"agencyId":"507f1f77bcf86cd799439011"}}}'),
+    headers: {},
+    body: {},
+    params: {}, query: {}, user: undefined,
     ...overrides,
   } as unknown as Request;
 }
@@ -42,59 +34,117 @@ function mockRes() {
   return res as Response;
 }
 
-describe("WebhooksController", () => {
-  beforeEach(() => jest.clearAllMocks());
+const validHeaders = {
+  "svix-id": "svix_id_1",
+  "svix-timestamp": "1700000000",
+  "svix-signature": "svix_sig_1",
+};
 
-  it("handles user.created webhook", async () => {
-    const req = mockReq(); const res = mockRes(); const next = jest.fn();
-    mockVerify.mockReturnValue({ type: "user.created", data: { id: "clerk_1" } });
-    mockHandleUserCreated.mockResolvedValue({});
-
-    await WebhooksController.clerk(req, res, next);
-    expect(mockHandleUserCreated).toHaveBeenCalled();
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
-  });
-
-  it("handles user.updated webhook", async () => {
-    const req = mockReq(); const res = mockRes(); const next = jest.fn();
-    mockVerify.mockReturnValue({ type: "user.updated", data: { id: "clerk_1" } });
-    mockHandleUserUpdated.mockResolvedValue({});
-
-    await WebhooksController.clerk(req, res, next);
-    expect(mockHandleUserUpdated).toHaveBeenCalled();
-  });
-
-  it("handles user.deleted webhook", async () => {
-    const req = mockReq(); const res = mockRes(); const next = jest.fn();
-    mockVerify.mockReturnValue({ type: "user.deleted", data: { id: "clerk_1" } });
-    mockHandleUserDeleted.mockResolvedValue({});
-
-    await WebhooksController.clerk(req, res, next);
-    expect(mockHandleUserDeleted).toHaveBeenCalled();
+describe("WebhooksController.clerk", () => {
+  let svc: Record<string, jest.Mock>;
+  beforeEach(() => {
+    svc = jest.requireMock("../webhooks.service").WebhooksService;
+    jest.clearAllMocks();
   });
 
   it("returns 400 when Svix headers are missing", async () => {
     const req = mockReq({ headers: {} });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
 
     await WebhooksController.clerk(req, res, next);
+
     expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: false,
+      error: expect.objectContaining({ code: "WEBHOOK_INVALID" }),
+    }));
+    expect(mockVerify).not.toHaveBeenCalled();
   });
 
-  it("returns 400 on invalid signature", async () => {
-    const req = mockReq(); const res = mockRes(); const next = jest.fn();
-    mockVerify.mockImplementation(() => { throw new Error("bad sig"); });
+  it("returns 400 when signature verification fails", async () => {
+    mockVerify.mockImplementation(() => {
+      throw new Error("bad sig");
+    });
+    const req = mockReq({ headers: validHeaders, body: { type: "user.created", data: {} } });
+    const res = mockRes();
+    const next = jest.fn();
 
     await WebhooksController.clerk(req, res, next);
+
+    expect(mockVerify).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: false,
+      error: expect.objectContaining({ code: "WEBHOOK_INVALID" }),
+    }));
   });
 
-  it("returns 500 on handler error", async () => {
-    const req = mockReq(); const res = mockRes(); const next = jest.fn();
-    mockVerify.mockReturnValue({ type: "user.created", data: { id: "clerk_1" } });
-    mockHandleUserCreated.mockRejectedValue(new Error("handler failed"));
+  it("routes user.created to handleUserCreated", async () => {
+    const data = { id: "u1", email_addresses: [{ email_address: "a@b.com" }] };
+    mockVerify.mockReturnValue({ type: "user.created", data });
+    const req = mockReq({ headers: validHeaders, body: {} });
+    const res = mockRes();
+    const next = jest.fn();
 
     await WebhooksController.clerk(req, res, next);
+
+    expect(svc.handleUserCreated).toHaveBeenCalledWith(data);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+  });
+
+  it("routes user.updated to handleUserUpdated", async () => {
+    const data = { id: "u1", email_addresses: [{ email_address: "a@b.com" }] };
+    mockVerify.mockReturnValue({ type: "user.updated", data });
+    const req = mockReq({ headers: validHeaders, body: {} });
+    const res = mockRes();
+    const next = jest.fn();
+
+    await WebhooksController.clerk(req, res, next);
+
+    expect(svc.handleUserUpdated).toHaveBeenCalledWith(data);
+  });
+
+  it("routes user.deleted to handleUserDeleted", async () => {
+    const data = { id: "u1" };
+    mockVerify.mockReturnValue({ type: "user.deleted", data });
+    const req = mockReq({ headers: validHeaders, body: {} });
+    const res = mockRes();
+    const next = jest.fn();
+
+    await WebhooksController.clerk(req, res, next);
+
+    expect(svc.handleUserDeleted).toHaveBeenCalledWith(data);
+  });
+
+  it("handles unknown event types without error", async () => {
+    mockVerify.mockReturnValue({ type: "organization.created", data: { id: "o1" } });
+    const req = mockReq({ headers: validHeaders, body: {} });
+    const res = mockRes();
+    const next = jest.fn();
+
+    await WebhooksController.clerk(req, res, next);
+
+    expect(svc.handleUserCreated).not.toHaveBeenCalled();
+    expect(svc.handleUserUpdated).not.toHaveBeenCalled();
+    expect(svc.handleUserDeleted).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+  });
+
+  it("returns 500 when the handler throws", async () => {
+    const data = { id: "u1", email_addresses: [{ email_address: "a@b.com" }] };
+    mockVerify.mockReturnValue({ type: "user.created", data });
+    svc.handleUserCreated.mockRejectedValue(new Error("boom"));
+    const req = mockReq({ headers: validHeaders, body: {} });
+    const res = mockRes();
+    const next = jest.fn();
+
+    await WebhooksController.clerk(req, res, next);
+
     expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: false,
+      error: expect.objectContaining({ code: "WEBHOOK_ERROR" }),
+    }));
   });
 });

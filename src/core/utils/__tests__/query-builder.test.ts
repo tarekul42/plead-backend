@@ -1,429 +1,417 @@
-import { QueryBuilder } from "../query-builder";
+import { QueryBuilder } from "../../utils/query-builder";
 
-interface TestDoc {
-  name: string;
-  age: number;
-  email: string;
+function createMockModel(findResult: unknown[] = [], countResult = 0, firstResult: unknown = null) {
+  const query: Record<string, jest.Mock> = {
+    select: jest.fn(),
+    sort: jest.fn(),
+    skip: jest.fn(),
+    limit: jest.fn(),
+  };
+  query.select.mockReturnValue(query);
+  query.sort.mockReturnValue(query);
+  query.skip.mockReturnValue(query);
+  query.limit.mockReturnValue(query);
+  query.lean = jest.fn().mockReturnValue(query);
+  query.exec = jest.fn().mockResolvedValue(findResult);
+
+  const find = jest.fn().mockReturnValue(query);
+
+  // first() uses findOne, which returns a distinct query whose exec
+  // resolves to a single document (or null).
+  const firstQuery: Record<string, jest.Mock> = {
+    select: jest.fn().mockReturnThis(),
+    sort: jest.fn().mockReturnThis(),
+  };
+  firstQuery.lean = jest.fn().mockReturnValue(firstQuery);
+  firstQuery.exec = jest.fn().mockResolvedValue(firstResult);
+  const findOne = jest.fn().mockReturnValue(firstQuery);
+
+  const countDocuments = jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(countResult) });
+
+  return { find, findOne, countDocuments, query, firstQuery };
 }
 
-const mockModel = {
-  find: jest.fn().mockReturnThis(),
-  findOne: jest.fn().mockReturnThis(),
-  countDocuments: jest.fn().mockReturnThis(),
-  select: jest.fn().mockReturnThis(),
-  sort: jest.fn().mockReturnThis(),
-  skip: jest.fn().mockReturnThis(),
-  limit: jest.fn().mockReturnThis(),
-  lean: jest.fn().mockReturnThis(),
-  exec: jest.fn(),
-};
-
 describe("QueryBuilder", () => {
-  let qb: QueryBuilder<TestDoc>;
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    qb = new QueryBuilder<TestDoc>(mockModel as any);
-  });
-
   describe("where", () => {
-    it("adds exact match filter", () => {
-      qb.where("name", "John");
-      mockModel.exec.mockResolvedValueOnce([{ name: "John" }]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(1) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({ name: "John" });
-      });
+    it("adds a field to the filter", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).where("status", "active").exec();
+      expect(model.find).toHaveBeenCalledWith({ status: "active" });
     });
 
-    it("skips null/undefined/empty values", () => {
-      qb.where("name", undefined).where("age", null).where("email", "");
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({});
-      });
-    });
-  });
-
-  describe("wherePrefix", () => {
-    it("adds prefix-anchored regex with escaped value", () => {
-      qb.wherePrefix("name", "Joh");
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({
-          name: { $regex: "^Joh", $options: "i" },
-        });
-      });
+    it("ignores undefined values", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).where("status", undefined).exec();
+      expect(model.find).toHaveBeenCalledWith({});
     });
 
-    it("escapes special regex characters", () => {
-      qb.wherePrefix("name", "Jo.hn");
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({
-          name: { $regex: "^Jo\\.hn", $options: "i" },
-        });
-      });
+    it("ignores null values", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).where("status", null).exec();
+      expect(model.find).toHaveBeenCalledWith({});
     });
 
-    it("skips empty prefix", () => {
-      qb.wherePrefix("name", "");
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({});
-      });
-    });
-  });
-
-  describe("whereRange", () => {
-    it("adds $gte and $lte", () => {
-      qb.whereRange("age", 18, 65);
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({ age: { $gte: 18, $lte: 65 } });
-      });
+    it("ignores empty string values", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).where("status", "").exec();
+      expect(model.find).toHaveBeenCalledWith({});
     });
 
-    it("adds only $gte", () => {
-      qb.whereRange("age", 18);
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({ age: { $gte: 18 } });
-      });
-    });
-
-    it("does nothing when both undefined", () => {
-      qb.whereRange("age");
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({});
-      });
-    });
-  });
-
-  describe("whereBoolean", () => {
-    it("parses 'true' as boolean true", () => {
-      qb.whereBoolean("isActive", "true");
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({ isActive: true });
-      });
-    });
-
-    it("parses 'false' as boolean false", () => {
-      qb.whereBoolean("isActive", "false");
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({ isActive: false });
-      });
-    });
-
-    it("ignores undefined", () => {
-      qb.whereBoolean("isActive");
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({});
-      });
-    });
-  });
-
-  describe("whereIn", () => {
-    it("adds $in filter", () => {
-      qb.whereIn("age", [1, 2, 3]);
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({ age: { $in: [1, 2, 3] } });
-      });
-    });
-
-    it("skips empty arrays", () => {
-      qb.whereIn("age", []);
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({});
-      });
-    });
-  });
-
-  describe("whereNe", () => {
-    it("adds $ne filter", () => {
-      qb.whereNe("status", "deleted");
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({ status: { $ne: "deleted" } });
-      });
-    });
-
-    it("skips null/undefined", () => {
-      qb.whereNe("status", null).whereNe("status", undefined);
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({});
-      });
-    });
-  });
-
-  describe("search", () => {
-    it("adds $or with regex on multiple fields", () => {
-      qb.search(["name", "email"], "john");
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({
-          $or: [
-            { name: { $regex: "john", $options: "i" } },
-            { email: { $regex: "john", $options: "i" } },
-          ],
-        });
-      });
-    });
-
-    it("skips empty query", () => {
-      qb.search(["name"], "");
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({});
-      });
-    });
-  });
-
-  describe("sortAsc / sortDesc", () => {
-    it("sorts ascending", () => {
-      qb.sortAsc("age");
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.sort).toHaveBeenCalledWith({ age: 1 });
-      });
-    });
-
-    it("sorts descending", () => {
-      qb.sortDesc("age");
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.sort).toHaveBeenCalledWith({ age: -1 });
-      });
-    });
-  });
-
-  describe("paginate", () => {
-    it("sets skip and limit", () => {
-      qb.paginate(2, 10);
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.skip).toHaveBeenCalledWith(10);
-        expect(mockModel.limit).toHaveBeenCalledWith(10);
-      });
-    });
-
-    it("does not skip when page is 1", () => {
-      qb.paginate(1, 20);
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.skip).not.toHaveBeenCalled();
-        expect(mockModel.limit).toHaveBeenCalledWith(20);
-      });
-    });
-  });
-
-  describe("exec", () => {
-    it("returns data and total from parallel queries", async () => {
-      const data = [{ name: "John", age: 30, email: "john@test.com" }];
-      mockModel.exec.mockResolvedValueOnce(data);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(1) } as any);
-
-      const result = await qb.exec();
-      expect(result).toEqual({ data, total: 1 });
-    });
-  });
-
-  describe("first", () => {
-    it("returns single document", async () => {
-      const doc = { name: "John", age: 30, email: "john@test.com" };
-      mockModel.exec.mockResolvedValueOnce(doc);
-      const result = await qb.first();
-      expect(result).toEqual(doc);
-    });
-  });
-
-  describe("count", () => {
-    it("returns count of matching documents", async () => {
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(5) } as any);
-      const result = await qb.count();
-      expect(result).toBe(5);
+    it("keeps falsy but meaningful values like 0 and false", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).where("count", 0).exec();
+      expect(model.find).toHaveBeenCalledWith({ count: 0 });
     });
   });
 
   describe("whereRegex", () => {
-    it("adds regex filter for non-empty value", () => {
-      qb.whereRegex("name", "John");
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({
-          name: { $regex: "John", $options: "i" },
-        });
+    it("adds a regex filter", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).whereRegex("name", "john").exec();
+      expect(model.find).toHaveBeenCalledWith({ name: { $regex: "john", $options: "i" } });
+    });
+
+    it("uses custom regex options", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).whereRegex("name", "john", "").exec();
+      expect(model.find).toHaveBeenCalledWith({ name: { $regex: "john", $options: "" } });
+    });
+
+    it("ignores empty values", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).whereRegex("name", "").exec();
+      expect(model.find).toHaveBeenCalledWith({});
+    });
+  });
+
+  describe("wherePrefix", () => {
+    it("anchors the regex with ^", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).wherePrefix("name", "john").exec();
+      expect(model.find).toHaveBeenCalledWith({
+        name: { $regex: "^john", $options: "i" },
       });
     });
 
-    it("skips empty value", () => {
-      qb.whereRegex("name", "");
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({});
+    it("escapes regex special characters", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).wherePrefix("name", "a.b*c").exec();
+      expect(model.find).toHaveBeenCalledWith({
+        name: { $regex: "^a\\.b\\*c", $options: "i" },
       });
+    });
+
+    it("ignores empty values", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).wherePrefix("name", "").exec();
+      expect(model.find).toHaveBeenCalledWith({});
+    });
+  });
+
+  describe("whereRange", () => {
+    it("adds a $gte filter for min only", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).whereRange("price", 100).exec();
+      expect(model.find).toHaveBeenCalledWith({ price: { $gte: 100 } });
+    });
+
+    it("adds a $lte filter for max only", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).whereRange("price", undefined, 500).exec();
+      expect(model.find).toHaveBeenCalledWith({ price: { $lte: 500 } });
+    });
+
+    it("adds both $gte and $lte when both are provided", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).whereRange("price", 100, 500).exec();
+      expect(model.find).toHaveBeenCalledWith({ price: { $gte: 100, $lte: 500 } });
+    });
+
+    it("adds nothing when neither min nor max is provided", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).whereRange("price").exec();
+      expect(model.find).toHaveBeenCalledWith({});
+    });
+  });
+
+  describe("whereBoolean", () => {
+    it("sets true when value is 'true'", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).whereBoolean("active", "true").exec();
+      expect(model.find).toHaveBeenCalledWith({ active: true });
+    });
+
+    it("sets false when value is 'false'", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).whereBoolean("active", "false").exec();
+      expect(model.find).toHaveBeenCalledWith({ active: false });
+    });
+
+    it("adds nothing for other values", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).whereBoolean("active", "yes").exec();
+      expect(model.find).toHaveBeenCalledWith({});
+    });
+
+    it("adds nothing when value is undefined", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).whereBoolean("active").exec();
+      expect(model.find).toHaveBeenCalledWith({});
     });
   });
 
   describe("whereTextSearch", () => {
-    it("adds $text search for non-empty query", () => {
-      qb.whereTextSearch("luxury apartment");
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({
-          $text: { $search: "luxury apartment" },
-        });
-      });
+    it("adds a $text search filter", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).whereTextSearch("luxury home").exec();
+      expect(model.find).toHaveBeenCalledWith({ $text: { $search: "luxury home" } });
     });
 
-    it("skips empty query", () => {
-      qb.whereTextSearch();
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.find).toHaveBeenCalledWith({});
-      });
+    it("ignores empty queries", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).whereTextSearch("").exec();
+      expect(model.find).toHaveBeenCalledWith({});
     });
   });
 
-  describe("sortAsc with undefined field", () => {
-    it("handles undefined field gracefully", () => {
-      qb.sortAsc(undefined as any);
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.sort).toHaveBeenCalledWith({ undefined: 1 });
-      });
+  describe("whereIn", () => {
+    it("adds a $in filter for a non-empty array", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).whereIn("status", ["new", "open"]).exec();
+      expect(model.find).toHaveBeenCalledWith({ status: { $in: ["new", "open"] } });
+    });
+
+    it("ignores an empty array", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).whereIn("status", []).exec();
+      expect(model.find).toHaveBeenCalledWith({});
     });
   });
 
-  describe("sortDesc with undefined field", () => {
-    it("handles undefined field gracefully", () => {
-      qb.sortDesc(undefined as any);
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.sort).toHaveBeenCalledWith({ undefined: -1 });
-      });
+  describe("whereNe", () => {
+    it("adds a $ne filter", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).whereNe("status", "archived").exec();
+      expect(model.find).toHaveBeenCalledWith({ status: { $ne: "archived" } });
+    });
+
+    it("ignores undefined values", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).whereNe("status", undefined).exec();
+      expect(model.find).toHaveBeenCalledWith({});
+    });
+
+    it("ignores null values", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).whereNe("status", null).exec();
+      expect(model.find).toHaveBeenCalledWith({});
     });
   });
 
-  describe("sortBy", () => {
-    it("selects field from sort map using sortKey", () => {
-      const sortMap = { newest: "createdAt", oldest: "createdAt", "price-asc": "price", "price-desc": "price" };
-      qb.sortBy(sortMap, "oldest");
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.sort).toHaveBeenCalledWith({ createdAt: 1 });
+  describe("search", () => {
+    it("builds an $or regex across multiple fields", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).search(["title", "description"], "beach").exec();
+      expect(model.find).toHaveBeenCalledWith({
+        $or: [
+          { title: { $regex: "beach", $options: "i" } },
+          { description: { $regex: "beach", $options: "i" } },
+        ],
       });
     });
 
-    it("defaults to newest sortKey", () => {
+    it("ignores an empty query", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).search(["title"], "").exec();
+      expect(model.find).toHaveBeenCalledWith({});
+    });
+
+    it("ignores an empty fields array", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).search([], "beach").exec();
+      expect(model.find).toHaveBeenCalledWith({});
+    });
+  });
+
+  describe("sortAsc / sortDesc / sortBy", () => {
+    it("sortAsc sets ascending order", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).sortAsc("createdAt").exec();
+      expect(model.query.sort).toHaveBeenCalledWith({ createdAt: 1 });
+    });
+
+    it("sortDesc sets descending order", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).sortDesc("createdAt").exec();
+      expect(model.query.sort).toHaveBeenCalledWith({ createdAt: -1 });
+    });
+
+    it("sortBy maps a known key to a descending sort", async () => {
+      const model = createMockModel([], 0);
       const sortMap = { newest: "createdAt" };
-      qb.sortBy(sortMap);
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.sort).toHaveBeenCalledWith({ createdAt: -1 });
-      });
+      await new QueryBuilder(model as never).sortBy(sortMap, "newest").exec();
+      expect(model.query.sort).toHaveBeenCalledWith({ createdAt: -1 });
     });
 
-    it("handles unknown sort key by not sorting", () => {
+    it("sortBy maps oldest to ascending", async () => {
+      const model = createMockModel([], 0);
+      const sortMap = { oldest: "createdAt" };
+      await new QueryBuilder(model as never).sortBy(sortMap, "oldest").exec();
+      expect(model.query.sort).toHaveBeenCalledWith({ createdAt: 1 });
+    });
+
+    it("sortBy maps price-asc to ascending", async () => {
+      const model = createMockModel([], 0);
+      const sortMap = { "price-asc": "price" };
+      await new QueryBuilder(model as never).sortBy(sortMap, "price-asc").exec();
+      expect(model.query.sort).toHaveBeenCalledWith({ price: 1 });
+    });
+
+    it("sortBy does nothing for an unknown key", async () => {
+      const model = createMockModel([], 0);
       const sortMap = { newest: "createdAt" };
-      qb.sortBy(sortMap, "unknown_key");
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.sort).not.toHaveBeenCalled();
-      });
+      await new QueryBuilder(model as never).sortBy(sortMap, "bogus").exec();
+      expect(model.query.sort).not.toHaveBeenCalled();
+    });
+
+    it("sortBy defaults to 'newest' when no key is given", async () => {
+      const model = createMockModel([], 0);
+      const sortMap = { newest: "createdAt" };
+      await new QueryBuilder(model as never).sortBy(sortMap).exec();
+      expect(model.query.sort).toHaveBeenCalledWith({ createdAt: -1 });
+    });
+  });
+
+  describe("paginate", () => {
+    it("sets skip and limit on the query", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).paginate(3, 10).exec();
+      expect(model.query.skip).toHaveBeenCalledWith(20);
+      expect(model.query.limit).toHaveBeenCalledWith(10);
+    });
+
+    it("clamps limit to maxLimit", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).paginate(1, 500, 50, 20).exec();
+      expect(model.query.limit).toHaveBeenCalledWith(50);
+    });
+
+    it("clamps page to a minimum of 1", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).paginate(0, 10).exec();
+      // page 0 clamps to 1, so skip = 0 and skip() is not called.
+      expect(model.query.skip).not.toHaveBeenCalled();
+      expect(model.query.limit).toHaveBeenCalledWith(10);
+    });
+
+    it("falls back to default limit when limit is 0 (falsy)", async () => {
+      // Math.floor(0 || 20) === 20, so a limit of 0 uses the default.
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).paginate(1, 0).exec();
+      expect(model.query.limit).toHaveBeenCalledWith(20);
+    });
+
+    it("uses defaults when page and limit are undefined", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).paginate().exec();
+      // Defaults: page 1, limit 20, skip 0 — skip() is not called.
+      expect(model.query.skip).not.toHaveBeenCalled();
+      expect(model.query.limit).toHaveBeenCalledWith(20);
     });
   });
 
   describe("select", () => {
-    it("sets projection fields and passes them to query", () => {
-      qb.select({ name: 1, age: 1 });
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      return qb.exec().then(() => {
-        expect(mockModel.select).toHaveBeenCalledWith({ name: 1, age: 1 });
-      });
+    it("applies a projection to the query", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).select({ name: 1, email: 1 }).exec();
+      expect(model.query.select).toHaveBeenCalledWith({ name: 1, email: 1 });
     });
   });
 
-  describe("exec with empty result", () => {
-    it("returns { data: [], total: 0 } when no data", async () => {
-      mockModel.exec.mockResolvedValueOnce([]);
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      const result = await qb.exec();
-      expect(result).toEqual({ data: [], total: 0 });
+  describe("exec", () => {
+    it("returns data and total", async () => {
+      const data = [{ id: 1 }, { id: 2 }];
+      const model = createMockModel(data, 50);
+
+      const result = await new QueryBuilder(model as never).exec();
+
+      expect(result).toEqual({ data, total: 50 });
+    });
+
+    it("applies select, sort, skip, and limit in order", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never)
+        .select({ name: 1 })
+        .sortAsc("name")
+        .paginate(2, 10)
+        .exec();
+
+      expect(model.query.select).toHaveBeenCalledWith({ name: 1 });
+      expect(model.query.sort).toHaveBeenCalledWith({ name: 1 });
+      expect(model.query.skip).toHaveBeenCalledWith(10);
+      expect(model.query.limit).toHaveBeenCalledWith(10);
+    });
+
+    it("does not call skip or limit when pagination was not applied", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).exec();
+      expect(model.query.skip).not.toHaveBeenCalled();
+      expect(model.query.limit).not.toHaveBeenCalled();
+    });
+
+    it("does not call sort when no sort was applied", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).exec();
+      expect(model.query.sort).not.toHaveBeenCalled();
+    });
+
+    it("does not call select when no projection was applied", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never).exec();
+      expect(model.query.select).not.toHaveBeenCalled();
+    });
+
+    it("chains multiple where clauses into a single filter", async () => {
+      const model = createMockModel([], 0);
+      await new QueryBuilder(model as never)
+        .where("status", "active")
+        .where("type", "house")
+        .exec();
+      expect(model.find).toHaveBeenCalledWith({ status: "active", type: "house" });
     });
   });
 
-  describe("first returns null", () => {
-    it("returns null when no document matches", async () => {
-      mockModel.exec.mockResolvedValueOnce(null);
-      const result = await qb.first();
+  describe("first", () => {
+    it("returns the first matching document", async () => {
+      const doc = { id: 1, name: "First" };
+      const model = createMockModel([], 0, doc);
+
+      const result = await new QueryBuilder(model as never).where("status", "active").first();
+
+      expect(model.findOne).toHaveBeenCalledWith({ status: "active" });
+      expect(result).toEqual(doc);
+    });
+
+    it("returns null when nothing matches", async () => {
+      const model = createMockModel([], 0, null);
+      const result = await new QueryBuilder(model as never).first();
       expect(result).toBeNull();
     });
-  });
 
-  describe("count returns zero", () => {
-    it("returns 0 when no documents match", async () => {
-      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValueOnce(0) } as any);
-      const result = await qb.count();
-      expect(result).toBe(0);
+    it("applies select and sort to the query", async () => {
+      const model = createMockModel([], 0, null);
+      await new QueryBuilder(model as never).select({ name: 1 }).sortDesc("createdAt").first();
+      expect(model.firstQuery.select).toHaveBeenCalledWith({ name: 1 });
+      expect(model.firstQuery.sort).toHaveBeenCalledWith({ createdAt: -1 });
     });
   });
 
-  describe("paginate with undefined params", () => {
-    it("uses defaults when page and limit are undefined", () => {
-      qb.paginate(undefined as any, undefined as any);
-      expect((qb as any).skipValue).toBe(0);
-      expect((qb as any).limitValue).toBe(20);
-    });
-
-    it("uses defaults when page and limit are not provided", () => {
-      qb.paginate();
-      expect((qb as any).skipValue).toBe(0);
-      expect((qb as any).limitValue).toBe(20);
-    });
-  });
-
-  describe("chaining", () => {
-    it("supports method chaining", () => {
-      const qb2 = new QueryBuilder<TestDoc>(mockModel as any);
-      expect(qb2.where("name", "John").sortAsc("age").paginate(1, 20)).toBe(qb2);
+  describe("count", () => {
+    it("returns the count of matching documents", async () => {
+      const model = createMockModel([], 7);
+      const result = await new QueryBuilder(model as never).where("status", "active").count();
+      expect(model.countDocuments).toHaveBeenCalledWith({ status: "active" });
+      expect(result).toBe(7);
     });
   });
 });

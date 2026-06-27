@@ -1,133 +1,199 @@
-import { Request, Response, NextFunction } from "express";
-
-jest.mock("../properties.service", () => ({
-  PropertiesService: {
-    list: jest.fn(),
-    getById: jest.fn(),
-    getBySlug: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-    getRelated: jest.fn(),
-  },
-}));
-
-jest.mock("../properties.repository", () => ({}));
-jest.mock("../properties.model", () => ({}));
-jest.mock("../../reviews/reviews.model", () => ({}));
-
 import { PropertiesController } from "../properties.controller";
+import { PropertiesService } from "../properties.service";
+import { NotFoundError } from "../../../core/utils/app-error";
 
-function mockReq(overrides: Partial<Request> = {}): Request {
+jest.mock("../properties.service");
+
+const MockedService = PropertiesService as jest.Mocked<typeof PropertiesService>;
+
+const AGENCY_ID = "64b7f0c2e1a2b3c4d5e6f701";
+
+interface MockResponse {
+  statusCode: number | null;
+  body: unknown;
+  status(code: number): MockResponse;
+  json(body: unknown): MockResponse;
+}
+
+function mockRes(): MockResponse {
+  const res: MockResponse = {
+    statusCode: null,
+    body: null,
+    status(code) {
+      res.statusCode = code;
+      return res;
+    },
+    json(body) {
+      res.body = body;
+      return res;
+    },
+  };
+  return res;
+}
+
+function mockReq(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
-    user: { id: "user_1", agencyId: "agency_1", role: "admin", clerkId: "clerk_1", email: "a@b.com" },
-    params: {}, query: {}, body: {},
+    user: { agencyId: AGENCY_ID },
+    params: {},
+    query: {},
+    body: {},
     ...overrides,
-  } as Request;
-}
-function mockRes() {
-  const res: Partial<Response> = {};
-  res.json = jest.fn().mockReturnValue(res);
-  res.status = jest.fn().mockReturnValue(res);
-  return res as Response;
+  };
 }
 
-describe("PropertiesController", () => {
-  let svc: Record<string, jest.Mock>;
-  beforeEach(() => {
-    svc = jest.requireMock("../properties.service").PropertiesService;
-    jest.clearAllMocks();
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
+describe("PropertiesController.list", () => {
+  it("returns 200 with data and pagination meta", async () => {
+    const req = mockReq({ query: { page: "2", limit: "12" } });
+    const res = mockRes();
+    const data = [{ slug: "home-1" }];
+    MockedService.list.mockResolvedValue({ data, total: 24 } as never);
+
+    await PropertiesController.list(req as never, res as never, jest.fn());
+
+    expect(res.statusCode).toBeNull();
+    expect(res.body).toEqual({
+      success: true,
+      data,
+      meta: { page: 2, limit: 12, total: 24, totalPages: 2 },
+    });
+    expect(MockedService.list).toHaveBeenCalledWith(
+      expect.objectContaining({ page: "2", limit: "12" }),
+      AGENCY_ID,
+    );
+  });
+});
+
+describe("PropertiesController.getBySlug", () => {
+  it("returns 200 with the property", async () => {
+    const req = mockReq({ params: { slug: "modern-home" } });
+    const res = mockRes();
+    const property = { slug: "modern-home" };
+    MockedService.getBySlug.mockResolvedValue(property as never);
+
+    await PropertiesController.getBySlug(req as never, res as never, jest.fn());
+
+    expect(res.body).toEqual({ success: true, data: property });
+    expect(MockedService.getBySlug).toHaveBeenCalledWith("modern-home", AGENCY_ID);
   });
 
-  it("list returns paginated properties", async () => {
-    const req = mockReq({ query: { page: "1", limit: "12" } });
-    const res = mockRes(); const next = jest.fn();
-    svc.list.mockResolvedValue({ data: [{ id: "p1" }], total: 1 });
+  it("propagates NotFoundError when the property is missing", async () => {
+    const req = mockReq({ params: { slug: "missing" } });
+    const res = mockRes();
+    const next = jest.fn();
+    MockedService.getBySlug.mockResolvedValue(null);
 
-    await PropertiesController.list(req, res, next);
-    expect(svc.list).toHaveBeenCalledWith(expect.any(Object), "agency_1");
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+    await PropertiesController.getBySlug(req as never, res as never, next);
+
+    expect(next).toHaveBeenCalledWith(NotFoundError("Property"));
+  });
+});
+
+describe("PropertiesController.getById", () => {
+  it("returns 200 with the property", async () => {
+    const req = mockReq({ params: { id: "64b7f0c2e1a2b3c4d5e6f702" } });
+    const res = mockRes();
+    const property = { id: "64b7f0c2e1a2b3c4d5e6f702" };
+    MockedService.getById.mockResolvedValue(property as never);
+
+    await PropertiesController.getById(req as never, res as never, jest.fn());
+
+    expect(res.body).toEqual({ success: true, data: property });
   });
 
-  it("getById returns property", async () => {
-    const req = mockReq({ params: { id: "abc" } });
-    const res = mockRes(); const next = jest.fn();
-    svc.getById.mockResolvedValue({ _id: "abc" });
+  it("propagates NotFoundError when the property is missing", async () => {
+    const req = mockReq({ params: { id: "64b7f0c2e1a2b3c4d5e6f702" } });
+    const res = mockRes();
+    const next = jest.fn();
+    MockedService.getById.mockResolvedValue(null);
 
-    await PropertiesController.getById(req, res, next);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+    await PropertiesController.getById(req as never, res as never, next);
+
+    expect(next).toHaveBeenCalledWith(NotFoundError("Property"));
+  });
+});
+
+describe("PropertiesController.create", () => {
+  it("returns 201 with the created property", async () => {
+    const req = mockReq({ body: { title: "New Home" } });
+    const res = mockRes();
+    const property = { slug: "new-home" };
+    MockedService.create.mockResolvedValue(property as never);
+
+    await PropertiesController.create(req as never, res as never, jest.fn());
+
+    expect(res.statusCode).toBe(201);
+    expect(res.body).toEqual({ success: true, data: property });
+    expect(MockedService.create).toHaveBeenCalledWith({ title: "New Home", agencyId: AGENCY_ID });
+  });
+});
+
+describe("PropertiesController.update", () => {
+  it("returns 200 with the updated property", async () => {
+    const req = mockReq({ params: { id: "64b7f0c2e1a2b3c4d5e6f702" }, body: { title: "Updated" } });
+    const res = mockRes();
+    const property = { id: "64b7f0c2e1a2b3c4d5e6f702", title: "Updated" };
+    MockedService.update.mockResolvedValue(property as never);
+
+    await PropertiesController.update(req as never, res as never, jest.fn());
+
+    expect(res.body).toEqual({ success: true, data: property });
+    expect(MockedService.update).toHaveBeenCalledWith(
+      "64b7f0c2e1a2b3c4d5e6f702",
+      AGENCY_ID,
+      { title: "Updated" },
+    );
   });
 
-  it("getById throws NotFoundError when missing", async () => {
-    const req = mockReq({ params: { id: "abc" } });
-    const res = mockRes(); const next = jest.fn();
-    svc.getById.mockResolvedValue(null);
+  it("propagates NotFoundError when the property is missing", async () => {
+    const req = mockReq({ params: { id: "64b7f0c2e1a2b3c4d5e6f702" }, body: {} });
+    const res = mockRes();
+    const next = jest.fn();
+    MockedService.update.mockResolvedValue(null);
 
-    await PropertiesController.getById(req, res, next);
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 404 }));
+    await PropertiesController.update(req as never, res as never, next);
+
+    expect(next).toHaveBeenCalledWith(NotFoundError("Property"));
+  });
+});
+
+describe("PropertiesController.delete", () => {
+  it("returns 200 with a deleted flag", async () => {
+    const req = mockReq({ params: { id: "64b7f0c2e1a2b3c4d5e6f702" } });
+    const res = mockRes();
+    MockedService.delete.mockResolvedValue(true);
+
+    await PropertiesController.delete(req as never, res as never, jest.fn());
+
+    expect(res.body).toEqual({ success: true, data: { deleted: true } });
+    expect(MockedService.delete).toHaveBeenCalledWith("64b7f0c2e1a2b3c4d5e6f702", AGENCY_ID);
   });
 
-  it("create returns 201", async () => {
-    const req = mockReq({ body: { title: "House" } });
-    const res = mockRes(); const next = jest.fn();
-    svc.create.mockResolvedValue({ id: "new" });
+  it("propagates NotFoundError when the property is missing", async () => {
+    const req = mockReq({ params: { id: "64b7f0c2e1a2b3c4d5e6f702" } });
+    const res = mockRes();
+    const next = jest.fn();
+    MockedService.delete.mockResolvedValue(false);
 
-    await PropertiesController.create(req, res, next);
-    expect(res.status).toHaveBeenCalledWith(201);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+    await PropertiesController.delete(req as never, res as never, next);
+
+    expect(next).toHaveBeenCalledWith(NotFoundError("Property"));
   });
+});
 
-  it("update throws NotFoundError when missing", async () => {
-    const req = mockReq({ params: { id: "abc" }, body: { price: 1 } });
-    const res = mockRes(); const next = jest.fn();
-    svc.update.mockResolvedValue(null);
+describe("PropertiesController.related", () => {
+  it("returns 200 with related properties", async () => {
+    const req = mockReq({ params: { id: "64b7f0c2e1a2b3c4d5e6f702" } });
+    const res = mockRes();
+    const related = [{ slug: "related-1" }, { slug: "related-2" }];
+    MockedService.getRelated.mockResolvedValue(related as never);
 
-    await PropertiesController.update(req, res, next);
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 404 }));
-  });
+    await PropertiesController.related(req as never, res as never, jest.fn());
 
-  it("create spreads req.body with agencyId from req.user", async () => {
-    const req = mockReq({ body: { title: "House", price: 100000 } });
-    const res = mockRes(); const next = jest.fn();
-    svc.create.mockResolvedValue({ id: "new" });
-
-    await PropertiesController.create(req, res, next);
-    expect(svc.create).toHaveBeenCalledWith({ title: "House", price: 100000, agencyId: "agency_1" });
-  });
-
-  it("getBySlug returns property", async () => {
-    const req = mockReq({ params: { slug: "my-house" } });
-    const res = mockRes(); const next = jest.fn();
-    svc.getBySlug.mockResolvedValue({ slug: "my-house" });
-
-    await PropertiesController.getBySlug(req, res, next);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
-  });
-
-  it("getBySlug throws NotFoundError when missing", async () => {
-    const req = mockReq({ params: { slug: "my-house" } });
-    const res = mockRes(); const next = jest.fn();
-    svc.getBySlug.mockResolvedValue(null);
-
-    await PropertiesController.getBySlug(req, res, next);
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 404 }));
-  });
-
-  it("delete throws NotFoundError when missing", async () => {
-    const req = mockReq({ params: { id: "abc" } });
-    const res = mockRes(); const next = jest.fn();
-    svc.delete.mockResolvedValue(false);
-
-    await PropertiesController.delete(req, res, next);
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 404 }));
-  });
-
-  it("related returns related properties", async () => {
-    const req = mockReq({ params: { id: "abc" } });
-    const res = mockRes(); const next = jest.fn();
-    svc.getRelated.mockResolvedValue([{ id: "r1" }]);
-
-    await PropertiesController.related(req, res, next);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+    expect(res.body).toEqual({ success: true, data: related });
+    expect(MockedService.getRelated).toHaveBeenCalledWith("64b7f0c2e1a2b3c4d5e6f702", AGENCY_ID);
   });
 });

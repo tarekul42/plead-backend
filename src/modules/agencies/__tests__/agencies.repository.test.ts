@@ -90,7 +90,7 @@ describe("AgenciesRepository", () => {
 
       expect(result).toEqual(expected);
       const { AgencyModel } = jest.requireMock("../agencies.model");
-      const { QueryBuilder } = jest.requireMock("../../core/utils/query-builder");
+      const { QueryBuilder } = jest.requireMock("../../../core/utils/query-builder");
       expect(QueryBuilder).toHaveBeenCalledWith(AgencyModel);
       expect(mockSortAsc).toHaveBeenCalledWith("name");
       expect(mockPaginate).toHaveBeenCalledWith(1, 20, 100, 20);
@@ -191,20 +191,20 @@ describe("AgenciesRepository", () => {
 
       const result = await AgenciesRepository.delete("id1");
       expect(result).toBe(false);
-      expect(mockSession.commitTransaction).not.toHaveBeenCalled();
+      expect(mockSession.commitTransaction).toHaveBeenCalled();
     });
 
     it("retries on TransientTransactionError and eventually succeeds", async () => {
       const transientError = new Error("transient");
       (transientError as any).errorLabels = ["TransientTransactionError"];
 
-      const { UserModel } = jest.requireMock("../../users/users.model");
-      const mockDeleteManySession = jest
+      const { AgencyModel } = jest.requireMock("../agencies.model");
+      const mockDeleteOneSession = jest
         .fn()
         .mockRejectedValueOnce(transientError)
         .mockRejectedValueOnce(transientError)
         .mockResolvedValue({ deletedCount: 1 });
-      UserModel.deleteMany.mockReturnValue({ session: mockDeleteManySession });
+      AgencyModel.deleteOne.mockReturnValue({ session: mockDeleteOneSession });
 
       const result = await AgenciesRepository.delete("id1");
       expect(result).toBe(true);

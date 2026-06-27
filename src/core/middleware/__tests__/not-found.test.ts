@@ -1,19 +1,31 @@
-import { Request, Response } from "express";
-import { notFound } from "../not-found.middleware";
+import { notFound } from "../../middleware/not-found.middleware";
 
-describe("notFound middleware", () => {
-  it("returns 404 with route not found message", () => {
-    const req = { originalUrl: "/unknown", path: "/unknown" } as Request;
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    } as unknown as Response;
+describe("not-found middleware", () => {
+  it("responds with 404 status", () => {
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    notFound({} as never, res as never);
 
-    notFound(req, res);
     expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({
+  });
+
+  it("returns a NOT_FOUND error envelope", () => {
+    const json = jest.fn();
+    const res = { status: jest.fn().mockReturnThis(), json };
+    notFound({} as never, res as never);
+
+    expect(json).toHaveBeenCalledWith({
       success: false,
       error: { code: "NOT_FOUND", message: "Route not found" },
     });
+  });
+
+  it("ignores the request object", () => {
+    const json = jest.fn();
+    const res = { status: jest.fn().mockReturnThis(), json };
+    const req = { method: "GET", path: "/api/unknown" };
+
+    notFound(req as never, res as never);
+
+    expect(json).toHaveBeenCalledTimes(1);
   });
 });
