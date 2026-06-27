@@ -33,6 +33,8 @@ app.use(cors({
 }));
 app.use(helmet());
 
+// Raw body parser for webhooks (svix needs exact raw body for signature verification)
+app.use("/api/v1/webhooks", express.raw({ type: "application/json" }));
 app.use("/api/v1/webhooks", webhooksRouter);
 
 app.use(express.json({ limit: "10mb" }));
