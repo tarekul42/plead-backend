@@ -15,7 +15,7 @@ export class QueryBuilder<T> {
   }
 
   whereRegex(field: string, value: string, options = "i"): this {
-    if (value) this.filter[field] = { $regex: value, $options: options };
+    if (value) this.filter[field] = { $regex: value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: options };
     return this;
   }
 
@@ -57,8 +57,9 @@ export class QueryBuilder<T> {
 
   search(fields: string[], query?: string, options = "i"): this {
     if (query && fields.length > 0) {
+      const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       this.filter.$or = fields.map(f => ({
-        [f]: { $regex: query, $options: options },
+        [f]: { $regex: escaped, $options: options },
       }));
     }
     return this;
