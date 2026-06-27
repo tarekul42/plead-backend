@@ -19,6 +19,7 @@ export const LeadsController = {
   getById: asyncHandler(async (req: Request, res: Response) => {
     const lead = await LeadsService.getById(String(req.params.id), req.user!.agencyId);
     if (!lead) throw NotFoundError("Lead");
+    if (req.user!.role === "agent" && lead.assignedAgentId?.toString() !== req.user!.id) throw NotFoundError("Lead");
     res.json(success(lead));
   }),
 
