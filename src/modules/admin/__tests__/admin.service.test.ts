@@ -2,6 +2,7 @@ jest.mock("../../users/users.model", () => ({
   UserModel: {
     countDocuments: jest.fn(),
     findOne: jest.fn(),
+    findOneAndUpdate: jest.fn(),
   },
 }));
 
@@ -96,19 +97,23 @@ describe("AdminService", () => {
   });
 
   describe("toggleUserStatus", () => {
-    it("toggles isActive", async () => {
+    it("toggles isActive atomically", async () => {
       const { UserModel } = require("../../users/users.model");
-      const mockSave = jest.fn().mockResolvedValue({ _id: "abc", isActive: false });
-      UserModel.findOne.mockResolvedValue({ _id: "abc", isActive: true, save: mockSave });
+      UserModel.findOneAndUpdate.mockResolvedValue({ _id: "abc", isActive: false });
 
       const result = await AdminService.toggleUserStatus("abc", "agency_1");
       expect(result!._id).toBe("abc");
-      expect(mockSave).toHaveBeenCalled();
+      expect(result!.isActive).toBe(false);
+      expect(UserModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: "abc", agencyId: "agency_1" },
+        [{ $set: { isActive: { $not: "$isActive" } } }],
+        { new: true },
+      );
     });
 
     it("returns null when user not found", async () => {
       const { UserModel } = require("../../users/users.model");
-      UserModel.findOne.mockResolvedValue(null);
+      UserModel.findOneAndUpdate.mockResolvedValue(null);
 
       const result = await AdminService.toggleUserStatus("abc", "agency_1");
       expect(result).toBeNull();

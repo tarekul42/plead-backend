@@ -80,7 +80,7 @@ describe("ReviewsController", () => {
     svc.update.mockResolvedValue({ _id: "abc", rating: 4 });
 
     await ReviewsController.update(req, res, next);
-    expect(svc.update).toHaveBeenCalledWith("abc", "agency_1", { rating: 4 });
+    expect(svc.update).toHaveBeenCalledWith("abc", "agency_1", "user_1", "admin", { rating: 4 });
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
   });
 

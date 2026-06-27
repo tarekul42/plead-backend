@@ -1,13 +1,15 @@
 import { AgenciesRepository } from "./agencies.repository";
 import { IAgency } from "./agencies.model";
+import { ForbiddenError } from "../../core/utils/app-error";
 
 export const AgenciesService = {
-  async list(page = 1, limit = 20) {
-    return AgenciesRepository.findAll(page, limit);
+  async list(agencyId: string, page = 1, limit = 20) {
+    return AgenciesRepository.findAll(agencyId, page, limit);
   },
 
-  async getById(id: string) {
-    return AgenciesRepository.findById(id);
+  async getById(id: string, agencyId: string) {
+    if (id !== agencyId) throw ForbiddenError("You can only access your own agency");
+    return AgenciesRepository.findById(agencyId);
   },
 
   async create(data: Partial<IAgency>) {
@@ -22,11 +24,13 @@ export const AgenciesService = {
     return AgenciesRepository.create({ ...data, slug });
   },
 
-  async update(id: string, data: Partial<IAgency>) {
-    return AgenciesRepository.update(id, data);
+  async update(id: string, agencyId: string, data: Partial<IAgency>) {
+    if (id !== agencyId) throw ForbiddenError("You can only modify your own agency");
+    return AgenciesRepository.update(agencyId, data);
   },
 
-  async delete(id: string) {
-    return AgenciesRepository.delete(id);
+  async delete(id: string, agencyId: string) {
+    if (id !== agencyId) throw ForbiddenError("You can only delete your own agency");
+    return AgenciesRepository.delete(agencyId);
   },
 };

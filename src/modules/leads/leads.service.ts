@@ -2,15 +2,8 @@ import { LeadsRepository } from "./leads.repository";
 import { ILead } from "./leads.model";
 
 export const LeadsService = {
-  async list(query: Record<string, unknown>, agencyId: string) {
-    return LeadsRepository.list({
-      agencyId,
-      status: typeof query.status === "string" ? query.status : undefined,
-      assignedAgentId: typeof query.assignedAgentId === "string" ? query.assignedAgentId : undefined,
-      q: typeof query.q === "string" ? query.q : undefined,
-      page: Number(query.page) || 1,
-      limit: Number(query.limit) || 20,
-    });
+  async list(query: { status?: string; assignedAgentId?: string; q?: string; page: number; limit: number }, agencyId: string) {
+    return LeadsRepository.list({ ...query, agencyId });
   },
 
   async getById(id: string, agencyId: string) {

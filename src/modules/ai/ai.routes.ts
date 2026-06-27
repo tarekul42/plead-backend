@@ -12,8 +12,8 @@ import {
 
 const aiRouter = Router();
 
-aiRouter.use(requireAuth);
 aiRouter.use(aiRateLimit);
+aiRouter.use(requireAuth);
 
 aiRouter.post(
   "/match-lead-properties",

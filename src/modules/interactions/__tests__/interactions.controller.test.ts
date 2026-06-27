@@ -89,7 +89,7 @@ describe("InteractionsController", () => {
     svc.update.mockResolvedValue({ _id: "abc", type: "email" });
 
     await InteractionsController.update(req, res, next);
-    expect(svc.update).toHaveBeenCalledWith("abc", "agency_1", { type: "email" });
+    expect(svc.update).toHaveBeenCalledWith("abc", "agency_1", "user_1", "admin", { type: "email" });
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
   });
 
@@ -99,7 +99,7 @@ describe("InteractionsController", () => {
     svc.delete.mockResolvedValue(true);
 
     await InteractionsController.delete(req, res, next);
-    expect(svc.delete).toHaveBeenCalledWith("abc", "agency_1");
+    expect(svc.delete).toHaveBeenCalledWith("abc", "agency_1", "user_1", "admin");
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
   });
 

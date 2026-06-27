@@ -36,13 +36,13 @@ export const ReviewsController = {
   }),
 
   update: asyncHandler(async (req: Request, res: Response) => {
-    const review = await ReviewsService.update(String(req.params.id), req.user!.agencyId, req.body);
+    const review = await ReviewsService.update(String(req.params.id), req.user!.agencyId, req.user!.id, req.user!.role, req.body);
     if (!review) throw NotFoundError("Review");
     res.json(success(review));
   }),
 
   delete: asyncHandler(async (req: Request, res: Response) => {
-    const deleted = await ReviewsService.delete(String(req.params.id), req.user!.agencyId);
+    const deleted = await ReviewsService.delete(String(req.params.id), req.user!.agencyId, req.user!.id, req.user!.role);
     if (!deleted) throw NotFoundError("Review");
     res.json(success({ deleted: true }));
   }),

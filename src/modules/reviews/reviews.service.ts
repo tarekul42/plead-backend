@@ -1,5 +1,7 @@
 import { ReviewsRepository } from "./reviews.repository";
 import { IReview } from "./reviews.model";
+import { PropertyModel } from "../properties/properties.model";
+import { ValidationError } from "../../core/utils/app-error";
 
 export const ReviewsService = {
   async listByAgency(agencyId: string, isVerified?: string, page = 1, limit = 50) {
@@ -11,16 +13,24 @@ export const ReviewsService = {
   },
 
   async create(data: Partial<IReview>) {
+    const propertyExists = await PropertyModel.exists({ _id: data.propertyId, agencyId: data.agencyId });
+    if (!propertyExists) {
+      throw ValidationError([{ message: "Property not found in your agency", path: ["propertyId"] }]);
+    }
     return ReviewsRepository.create(data);
   },
 
-  async update(id: string, agencyId: string, data: Partial<IReview>) {
+  async update(id: string, agencyId: string, userId: string, role: string, data: Partial<IReview>) {
     const existing = await ReviewsRepository.findById(id, agencyId);
     if (!existing) return null;
+    if (role === "agent" && existing.userId?.toString() !== userId) return null;
     return ReviewsRepository.update(id, agencyId, data);
   },
 
-  async delete(id: string, agencyId: string) {
+  async delete(id: string, agencyId: string, userId: string, role: string) {
+    if (role !== "agent") return ReviewsRepository.delete(id, agencyId);
+    const existing = await ReviewsRepository.findById(id, agencyId);
+    if (!existing || existing.userId?.toString() !== userId) return false;
     return ReviewsRepository.delete(id, agencyId);
   },
 };

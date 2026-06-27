@@ -86,7 +86,7 @@ describe("AgenciesRepository", () => {
       const expected = { data: [{ id: "1", name: "Test Agency" }], total: 1 };
       mockQbExec.mockResolvedValue(expected);
 
-      const result = await AgenciesRepository.findAll(1, 20);
+      const result = await AgenciesRepository.findAll("agency-id", 1, 20);
 
       expect(result).toEqual(expected);
       const { AgencyModel } = jest.requireMock("../agencies.model");

@@ -7,11 +7,11 @@ import { LeadsService } from "./leads.service";
 
 export const LeadsController = {
   list: asyncHandler(async (req: Request, res: Response) => {
-    const { page, limit } = Pagination.from(req.query, 20);
-    const query = { ...req.query };
+    const query = { ...req.query } as unknown as { status?: string; assignedAgentId?: string; q?: string; page: number; limit: number };
     if (req.user!.role === "agent") {
       query.assignedAgentId = req.user!.id;
     }
+    const { page, limit } = query;
     const { data, total } = await LeadsService.list(query, req.user!.agencyId);
     res.json(success(data, Pagination.meta(page, limit, total)));
   }),
@@ -19,6 +19,7 @@ export const LeadsController = {
   getById: asyncHandler(async (req: Request, res: Response) => {
     const lead = await LeadsService.getById(String(req.params.id), req.user!.agencyId);
     if (!lead) throw NotFoundError("Lead");
+    if (req.user!.role === "agent" && lead.assignedAgentId?.toString() !== req.user!.id) throw NotFoundError("Lead");
     res.json(success(lead));
   }),
 
