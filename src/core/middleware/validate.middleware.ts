@@ -20,6 +20,13 @@ export const validate = (schema: ZodSchema, source: "body" | "query" | "params" 
     const dataToValidate = req[source];
     const result = schema.safeParse(dataToValidate);
     if (!result.success) return next(formatZodError(result.error));
-    req[source] = result.data;
+    
+    Object.defineProperty(req, source, {
+      value: result.data,
+      writable: true,
+      enumerable: true,
+      configurable: true
+    });
+    
     next();
   };

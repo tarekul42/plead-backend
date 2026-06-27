@@ -28,7 +28,7 @@ describe("config/env", () => {
   }
 
   it("parses a valid environment", async () => {
-    withEnv({});
+    withEnv({ PORT: undefined });
     const { env } = await import("../../config/env");
     expect(env.PORT).toBe(8080);
     expect(env.NODE_ENV).toBe("test");

@@ -68,7 +68,7 @@ export const listPropertiesQuerySchema = z.object({
   priceMax: z.coerce.number().optional(),
   beds: z.coerce.number().optional(),
   status: z.union([propertyStatusEnum, z.literal("under_contract")]).optional().transform(v => normalizePropertyStatus(v)),
-  sort: z.enum(["newest", "oldest", "price-asc", "price-desc"]).optional(),
+  sort: z.enum(["newest", "oldest", "price-asc", "price-desc", "-createdAt", "-views", "createdAt", "views"]).optional(),
   page: z.coerce.number().default(1),
   limit: z.coerce.number().default(12),
   agencyId: objectId.optional(),

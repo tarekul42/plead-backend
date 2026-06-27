@@ -79,7 +79,7 @@ export class QueryBuilder<T> {
     const key = sortKey || "newest";
     const field = sortMap[key];
     if (field) {
-      this.sort[field] = key === "oldest" || key === "price-asc" ? 1 : -1;
+      this.sort[field] = key === "oldest" || key === "price-asc" || (key === field && !key.startsWith("-")) ? 1 : -1;
     }
     return this;
   }

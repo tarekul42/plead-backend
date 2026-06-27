@@ -43,38 +43,45 @@ async function seed() {
   });
   console.log(`Agency created: ${agency.name} (${agency._id})`);
 
-  // ─── Users ────────────────────────────────────────────────
-  const usersData = [
-    {
-      clerkId: "user_2demo_admin",
-      email: "admin@proplead.ai",
-      name: "Admin User",
-      role: "admin" as const,
-      agencyId: agency._id,
-      title: "Platform Administrator",
-      isActive: true,
-    },
-    {
-      clerkId: "user_2demo_manager",
-      email: "manager@proplead.ai",
-      name: "Sarah Mitchell",
-      role: "manager" as const,
-      agencyId: agency._id,
-      title: "Agency Manager",
-      phone: "+1-555-0100",
-      isActive: true,
-    },
-    {
-      clerkId: "user_2demo_agent",
-      email: "agent@proplead.ai",
-      name: "James Chen",
-      role: "agent" as const,
-      agencyId: agency._id,
-      title: "Senior Real Estate Agent",
-      phone: "+1-555-0101",
-      isActive: true,
-    },
+  // ─── Users (Clerk + MongoDB) ────────────────────────────────────────────────
+  const { createClerkClient } = require("@clerk/express");
+  const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
+
+  const demoAccounts = [
+    { email: "admin@proplead.ai", password: "Admin123!", firstName: "Admin", lastName: "User", role: "admin", title: "Platform Administrator" },
+    { email: "manager@proplead.ai", password: "Manager123!", firstName: "Sarah", lastName: "Mitchell", role: "manager", title: "Agency Manager", phone: "+1-555-0100" },
+    { email: "agent@proplead.ai", password: "Agent123!", firstName: "James", lastName: "Chen", role: "agent", title: "Senior Real Estate Agent", phone: "+1-555-0101" },
   ];
+
+  const usersData = [];
+  for (const account of demoAccounts) {
+    let clerkUser;
+    const { data: existingUsers } = await clerk.users.getUserList({ emailAddress: [account.email] });
+    if (existingUsers && existingUsers.length > 0) {
+      clerkUser = existingUsers[0];
+      await clerk.users.updateUser(clerkUser.id, { password: account.password });
+    } else {
+      clerkUser = await clerk.users.createUser({
+        emailAddress: [account.email],
+        password: account.password,
+        firstName: account.firstName,
+        lastName: account.lastName,
+        skipPasswordChecks: true,
+      });
+    }
+
+    usersData.push({
+      clerkId: clerkUser.id,
+      email: account.email,
+      name: `${account.firstName} ${account.lastName}`,
+      role: account.role as any,
+      agencyId: agency._id,
+      title: account.title,
+      phone: account.phone,
+      isActive: true,
+    });
+  }
+
   const users = await UserModel.insertMany(usersData);
   const [adminUser, managerUser, agentUser] = users;
   console.log(`Users created: ${users.map((u) => `${u.name} (${u.role})`).join(", ")}`);

@@ -66,6 +66,16 @@ app.use((req, res, next) => {
 });
 app.use(globalRateLimit);
 
+app.get("/favicon.ico", (_req, res) => res.status(204).end());
+
+app.get("/", (_req, res) => {
+  res.json({
+    success: true,
+    message: "PropLead API is running",
+    version: "1.0.0"
+  });
+});
+
 app.get("/health", async (_req, res) => {
   const dbState = mongoose.connection.readyState;
   const dbStatus = ["disconnected", "connected", "connecting", "disconnecting"][dbState] || "unknown";

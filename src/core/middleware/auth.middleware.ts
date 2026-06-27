@@ -1,6 +1,5 @@
 import { type Request, type Response, type NextFunction } from "express";
 import { requireAuth as clerkRequireAuth } from "@clerk/express";
-import { UsersService } from "../../modules/users";
 import { UnauthorizedError } from "../utils/app-error";
 import type { Role } from "../constants";
 
@@ -51,6 +50,7 @@ export const requireAuth = [
         return next();
       }
 
+      const { UsersService } = await import("../../modules/users");
       const dbUser = await UsersService.getByClerkId(clerkUserId);
       if (!dbUser || !dbUser.isActive) throw UnauthorizedError("User not found or inactive");
 

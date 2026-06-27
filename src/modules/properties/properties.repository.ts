@@ -34,7 +34,9 @@ async function populateAgentList(properties: IProperty[]): Promise<IProperty[]> 
 }
 
 async function findById(id: string, agencyId: string): Promise<IProperty | null> {
-  const property = await PropertyModel.findOne({ _id: id, agencyId }).lean();
+  const query: Record<string, unknown> = { _id: id };
+  if (agencyId) query.agencyId = agencyId;
+  const property = await PropertyModel.findOne(query).lean();
   return populateAgent(property);
 }
 
@@ -43,6 +45,10 @@ const sortMap: Record<string, string> = {
   oldest: "publishedAt",
   "price-asc": "price",
   "price-desc": "price",
+  "-createdAt": "createdAt",
+  "createdAt": "createdAt",
+  "-views": "views",
+  "views": "views",
 };
 
 export const PropertiesRepository = {
@@ -64,7 +70,9 @@ export const PropertiesRepository = {
   },
 
   async findBySlug(slug: string, agencyId: string): Promise<IProperty | null> {
-    const property = await PropertyModel.findOne({ slug, agencyId }).lean();
+    const query: Record<string, unknown> = { slug };
+    if (agencyId) query.agencyId = agencyId;
+    const property = await PropertyModel.findOne(query).lean();
     return populateAgent(property);
   },
 
@@ -75,11 +83,15 @@ export const PropertiesRepository = {
   },
 
   update(id: string, agencyId: string, data: Partial<IProperty>) {
-    return PropertyModel.findOneAndUpdate({ _id: id, agencyId }, data, { new: true });
+    const query: Record<string, unknown> = { _id: id };
+    if (agencyId) query.agencyId = agencyId;
+    return PropertyModel.findOneAndUpdate(query, data, { new: true });
   },
 
   async delete(id: string, agencyId: string) {
-    const result = await PropertyModel.deleteOne({ _id: id, agencyId });
+    const query: Record<string, unknown> = { _id: id };
+    if (agencyId) query.agencyId = agencyId;
+    const result = await PropertyModel.deleteOne(query);
     return result.deletedCount > 0;
   },
 
@@ -87,16 +99,18 @@ export const PropertiesRepository = {
     const property = await findById(propertyId, agencyId);
     if (!property) return [];
 
-    const properties = await PropertyModel.find({
+    const query: Record<string, unknown> = {
       _id: { $ne: propertyId },
-      agencyId,
       propertyType: property.propertyType,
       status: "available",
       price: {
         $gte: property.price * 0.7,
         $lte: property.price * 1.3,
       },
-    })
+    };
+    if (agencyId) query.agencyId = agencyId;
+
+    const properties = await PropertyModel.find(query)
       .sort({ publishedAt: -1 })
       .limit(limit)
       .lean();
