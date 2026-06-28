@@ -27,24 +27,21 @@ export const softDeletePlugin = (schema: Schema) => {
     return this.find({ isDeleted: false });
   };
 
-  schema.pre(/^find/, function (this: any, next) {
+  schema.pre(/^find/, function (this: any) {
     if (!this._skipSoftDelete) {
       this.where({ isDeleted: false });
     }
-    next();
   });
 
-  schema.pre("countDocuments", function (this: any, next) {
+  schema.pre("countDocuments", function (this: any) {
     if (!this._skipSoftDelete) {
       this.where({ isDeleted: false });
     }
-    next();
   });
 
-  schema.pre("aggregate", function (this: any, next) {
+  schema.pre("aggregate", function (this: any) {
     if (!this._skipSoftDelete) {
       this.pipeline().unshift({ $match: { isDeleted: false } });
     }
-    next();
   });
 };

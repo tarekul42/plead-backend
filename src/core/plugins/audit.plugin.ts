@@ -13,17 +13,16 @@ export const auditPlugin = (schema: Schema) => {
     updatedBy: { type: String, default: null },
   });
 
-  schema.pre("save", function (this: any, next) {
+  schema.pre("save", function (this: any) {
     if (this.isNew && !this.createdBy && this._userId) {
       this.createdBy = this._userId;
     }
     if (this.modifiedPaths().length > 0 && this._userId) {
       this.updatedBy = this._userId;
     }
-    next();
   });
 
-  schema.pre("findOneAndUpdate", function (this: any, next) {
+  schema.pre("findOneAndUpdate", function (this: any) {
     const update = this.getUpdate();
     if (update && this._userId) {
       if (update.$set) {
@@ -32,7 +31,6 @@ export const auditPlugin = (schema: Schema) => {
         this.setUpdate({ $set: { updatedBy: this._userId }, ...update });
       }
     }
-    next();
   });
 
   schema.methods.setUserId = function (userId: string) {
@@ -40,7 +38,7 @@ export const auditPlugin = (schema: Schema) => {
     return this;
   };
 
-  schema.statics.setUserIdOnQuery = function (userId: string) {
+  schema.statics.setUserIdOnQuery = function (this: any, userId: string) {
     this._userId = userId;
     return this;
   };
