@@ -29,9 +29,12 @@ export const LeadsController = {
   }),
 
   update: asyncHandler(async (req: Request, res: Response) => {
-    const lead = await LeadsService.update(String(req.params.id), req.user!.agencyId, req.body);
+    const lead = await LeadsService.getById(String(req.params.id), req.user!.agencyId);
     if (!lead) throw NotFoundError("Lead");
-    res.json(success(lead));
+    if (req.user!.role === "agent" && lead.assignedAgentId?.toString() !== req.user!.id) throw NotFoundError("Lead");
+    const updated = await LeadsService.update(String(req.params.id), req.user!.agencyId, req.body);
+    if (!updated) throw NotFoundError("Lead");
+    res.json(success(updated));
   }),
 
   delete: asyncHandler(async (req: Request, res: Response) => {
