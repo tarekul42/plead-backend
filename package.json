@@ -1,7 +1,6 @@
 {
   "name": "plead-backend",
   "version": "1.0.0",
-  "type": "module",
   "description": "PropLead AI — Real Estate Lead Engine (Backend)",
   "main": "dist/server.js",
   "scripts": {
