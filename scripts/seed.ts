@@ -48,27 +48,28 @@ async function seed() {
   const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
 
   const demoAccounts = [
-    { email: "admin@proplead.ai", password: "Admin123!", firstName: "Admin", lastName: "User", role: "admin", title: "Platform Administrator" },
-    { email: "manager@proplead.ai", password: "Manager123!", firstName: "Sarah", lastName: "Mitchell", role: "manager", title: "Agency Manager", phone: "+1-555-0100" },
-    { email: "agent@proplead.ai", password: "Agent123!", firstName: "James", lastName: "Chen", role: "agent", title: "Senior Real Estate Agent", phone: "+1-555-0101" },
+    { email: process.env.DEMO_ADMIN_EMAIL || "admin@proplead.ai", password: process.env.DEMO_ADMIN_PASSWORD || "Adm4$vB7!wX1", firstName: "Admin", lastName: "User", role: "admin", title: "Platform Administrator" },
+    { email: process.env.DEMO_MANAGER_EMAIL || "manager@proplead.ai", password: process.env.DEMO_MANAGER_PASSWORD || "Mgr8$jL3!nR5", firstName: "Sarah", lastName: "Mitchell", role: "manager", title: "Agency Manager", phone: "+1-555-0100" },
+    { email: process.env.DEMO_AGENT_EMAIL || "agent@proplead.ai", password: process.env.DEMO_AGENT_PASSWORD || "Ag7$k9mX!pQ2", firstName: "James", lastName: "Chen", role: "agent", title: "Senior Real Estate Agent", phone: "+1-555-0101" },
   ];
 
   const usersData = [];
   for (const account of demoAccounts) {
     let clerkUser;
     const { data: existingUsers } = await clerk.users.getUserList({ emailAddress: [account.email] });
-    if (existingUsers && existingUsers.length > 0) {
-      clerkUser = existingUsers[0];
-      await clerk.users.updateUser(clerkUser.id, { password: account.password });
-    } else {
-      clerkUser = await clerk.users.createUser({
-        emailAddress: [account.email],
-        password: account.password,
-        firstName: account.firstName,
-        lastName: account.lastName,
-        skipPasswordChecks: true,
-      });
+    // Delete existing users so we can recreate with skipPasswordChecks
+    for (const u of existingUsers || []) {
+      await clerk.users.deleteUser(u.id);
     }
+
+    clerkUser = await clerk.users.createUser({
+      emailAddress: [account.email],
+      password: account.password,
+      firstName: account.firstName,
+      lastName: account.lastName,
+      skipPasswordChecks: true,
+      verifyEmail: true,
+    });
 
     usersData.push({
       clerkId: clerkUser.id,

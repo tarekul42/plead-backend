@@ -4,7 +4,9 @@ import helmet from "helmet";
 import mongoose from "mongoose";
 import { env } from "./core/config/env";
 import { requestLogger } from "./core/middleware/request-logger.middleware";
-import { globalRateLimit } from "./core/middleware/rate-limit.middleware";
+import { globalRateLimit, aiRateLimit } from "./core/middleware/rate-limit.middleware";
+import { sanitizeMiddleware } from "./core/middleware/sanitize.middleware";
+import { hppMiddleware } from "./core/middleware/hpp.middleware";
 import { notFound } from "./core/middleware/not-found.middleware";
 import { errorHandler } from "./core/middleware/error-handler.middleware";
 
@@ -17,10 +19,13 @@ import { aiRouter } from "./modules/ai";
 import { adminRouter } from "./modules/admin";
 import { agenciesRouter } from "./modules/agencies";
 import { webhooksRouter } from "./modules/webhooks";
+import { authRouter } from "./modules/auth";
 import { usersRouter } from "./modules/users";
 
 import { GeminiProvider } from "./modules/ai/providers/gemini.provider";
 import { GroqProvider } from "./modules/ai/providers/groq.provider";
+
+import cookieParser from "cookie-parser";
 
 let healthCache: { status: string; expiresAt: number } | null = null;
 const HEALTH_CACHE_TTL = 30_000;
@@ -49,8 +54,14 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes("*")) return cb(null, true);
     cb(null, false);
   },
+  credentials: true,
 }));
 app.use(helmet());
+app.use(cookieParser());
+
+// Security middlewares
+app.use(sanitizeMiddleware);
+app.use(hppMiddleware);
 
 // Raw body parser for webhooks (svix needs exact raw body for signature verification)
 app.use("/api/v1/webhooks", express.raw({ type: "application/json" }));
@@ -103,13 +114,14 @@ app.get("/health", async (_req, res) => {
   });
 });
 
+app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/agencies", agenciesRouter);
 app.use("/api/v1/properties", propertiesRouter);
 app.use("/api/v1/leads", leadsRouter);
 app.use("/api/v1", interactionsRouter);
 app.use("/api/v1", reviewsRouter);
 app.use("/api/v1/blog", blogsRouter);
-app.use("/api/v1/ai", aiRouter);
+app.use("/api/v1/ai", aiRateLimit, aiRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/users", usersRouter);
 
