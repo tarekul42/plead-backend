@@ -1,12 +1,14 @@
 import { AIProvider } from "./ai-provider.interface";
 import { GeminiProvider } from "./gemini.provider";
 import { GroqProvider } from "./groq.provider";
+import { OpenRouterProvider } from "./openrouter.provider";
 import { env } from "../../../core/config/env";
 import { logger } from "../../../core/utils/logger";
 
 const providers: Record<string, AIProvider> = {
   gemini: new GeminiProvider(),
   groq: new GroqProvider(),
+  openrouter: new OpenRouterProvider(),
 };
 
 export async function callAIWithFallback(params: {
