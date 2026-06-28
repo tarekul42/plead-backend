@@ -60,7 +60,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https://res.cloudinary.com", "https://*.tile.openstreetmap.org"],
-      connectSrc: ["'self'", env.CORS_ORIGIN, "https://api.clerk.com", "https://clerk.plead.lcl"],
+      connectSrc: ["'self'", ...env.CORS_ORIGIN.split(",").map(s => s.trim()).filter(Boolean), "https://api.clerk.com", "https://clerk.plead.lcl"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       frameSrc: ["'self'", "https://accounts.clerk.com"],
       objectSrc: ["'none'"],

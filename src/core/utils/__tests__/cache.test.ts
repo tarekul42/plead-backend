@@ -7,11 +7,16 @@ const SchemaClass = jest.fn().mockImplementation(() => ({
 // Schema.Types.Mixed is accessed as a static on the Schema constructor.
 (SchemaClass as any).Types = { Mixed: "Mixed" };
 
+const mockCountDocuments = jest.fn().mockResolvedValue(0);
+const mockFind = jest.fn().mockReturnValue({ sort: jest.fn().mockReturnValue({ limit: jest.fn().mockResolvedValue([]) }) });
+
 jest.mock("mongoose", () => ({
   Schema: SchemaClass,
   model: jest.fn().mockReturnValue({
     findOne: mockFindOne,
     findOneAndUpdate: mockFindOneAndUpdate,
+    countDocuments: mockCountDocuments,
+    find: mockFind,
   }),
 }));
 

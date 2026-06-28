@@ -21,11 +21,19 @@ jest.mock("../../../core/utils/query-builder", () => ({
 
 jest.mock("../properties.model", () => ({
   PropertyModel: {
-    findOne: jest.fn(),
+    findOne: jest.fn(() => ({
+      populate: jest.fn().mockReturnThis(),
+      lean: jest.fn().mockResolvedValue(null),
+    })),
     findOneAndUpdate: jest.fn(),
     create: jest.fn(),
     deleteOne: jest.fn(),
-    find: jest.fn(),
+    find: jest.fn(() => ({
+      sort: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      populate: jest.fn().mockReturnThis(),
+      lean: jest.fn().mockResolvedValue([]),
+    })),
   },
 }));
 
@@ -91,7 +99,7 @@ describe("PropertiesRepository", () => {
         page: 1,
         limit: 12,
       });
-      expect(result.data).toEqual(rawData.map(d => ({ ...d, assignedAgent: null })));
+      expect(result.data).toEqual(rawData);
       expect(result.total).toBe(1);
     });
   });
@@ -101,6 +109,7 @@ describe("PropertiesRepository", () => {
       const doc = { _id: "id1", title: "Property" };
       const { PropertyModel } = jest.requireMock("../properties.model");
       PropertyModel.findOne.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
         lean: jest.fn().mockResolvedValue(doc),
       });
 
@@ -115,6 +124,7 @@ describe("PropertiesRepository", () => {
     it("returns null when not found", async () => {
       const { PropertyModel } = jest.requireMock("../properties.model");
       PropertyModel.findOne.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
         lean: jest.fn().mockResolvedValue(null),
       });
 
@@ -127,6 +137,7 @@ describe("PropertiesRepository", () => {
     it("queries with slug + agencyId + lean", async () => {
       const { PropertyModel } = jest.requireMock("../properties.model");
       PropertyModel.findOne.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
         lean: jest.fn().mockResolvedValue({
           slug: "beach-house",
           agencyId: "ag1",
@@ -218,11 +229,13 @@ describe("PropertiesRepository", () => {
       ];
       const { PropertyModel } = jest.requireMock("../properties.model");
       PropertyModel.findOne.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
         lean: jest.fn().mockResolvedValue(property),
       });
       PropertyModel.find.mockReturnValue({
         sort: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
+        populate: jest.fn().mockReturnThis(),
         lean: jest.fn().mockResolvedValue(related),
       });
 
@@ -239,12 +252,13 @@ describe("PropertiesRepository", () => {
         status: "available",
         price: { $gte: 210000, $lte: 390000 },
       });
-      expect(result).toEqual(related.map(r => ({ ...r, assignedAgent: null })));
+      expect(result).toEqual(related);
     });
 
     it("returns empty array when property not found", async () => {
       const { PropertyModel } = jest.requireMock("../properties.model");
       PropertyModel.findOne.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
         lean: jest.fn().mockResolvedValue(null),
       });
 

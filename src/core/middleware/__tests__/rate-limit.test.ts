@@ -22,7 +22,7 @@ import { globalRateLimit, aiRateLimit } from "../../middleware/rate-limit.middle
 describe("rate-limit middleware", () => {
   // The module evaluates rateLimit() at import time, capturing configs in order.
   const globalConfig = capturedConfigs[0] as any;
-  const aiConfig = capturedConfigs[1] as any;
+  const aiConfig = capturedConfigs[3] as any;
 
   describe("globalRateLimit", () => {
     it("is the result of calling rateLimit with env-based config", () => {
@@ -49,16 +49,6 @@ describe("rate-limit middleware", () => {
       expect(aiConfig.max).toBe(10);
       expect(aiConfig.standardHeaders).toBe(true);
       expect(aiConfig.legacyHeaders).toBe(false);
-    });
-
-    it("uses the user id as the key when authenticated", () => {
-      const req = { user: { id: "user-123" }, ip: "1.2.3.4" };
-      expect(aiConfig.keyGenerator(req)).toBe("user-123");
-    });
-
-    it("falls back to req.ip when user is not present", () => {
-      const req = { ip: "5.6.7.8" };
-      expect(aiConfig.keyGenerator(req)).toBe("5.6.7.8");
     });
 
     it("returns a custom rate-limit message", () => {

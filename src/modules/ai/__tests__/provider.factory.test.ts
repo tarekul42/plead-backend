@@ -17,9 +17,11 @@ jest.mock("../providers/groq.provider", () => ({
 
 jest.mock("../../../core/utils/logger", () => ({ logger: { error: jest.fn(), info: jest.fn(), warn: jest.fn() } }));
 
-const mockEnv: { AI_PROVIDER_PRIMARY: string; AI_PROVIDER_FALLBACK: string } = {
+const mockEnv: Record<string, string | undefined> = {
   AI_PROVIDER_PRIMARY: "gemini",
   AI_PROVIDER_FALLBACK: "groq",
+  GEMINI_API_KEY: "sk-gemini-test",
+  GROQ_API_KEY: "sk-groq-test",
 };
 jest.mock("../../../core/config/env", () => ({ env: mockEnv }));
 
@@ -60,16 +62,21 @@ describe("callAIWithFallback", () => {
     await expect(callAIWithFallback(params)).rejects.toThrow("AI providers unavailable");
   });
 
-  it("throws for unknown primary provider", async () => {
+  it("skips unknown primary provider and uses fallback", async () => {
     mockEnv.AI_PROVIDER_PRIMARY = "unknown";
+    mockGeminiGenerate.mockResolvedValue({ data: { ok: true }, tokensUsed: 10 });
 
-    await expect(callAIWithFallback(params)).rejects.toThrow("Unknown primary AI provider: unknown");
+    const result = await callAIWithFallback(params);
+    // The "unknown" provider doesn't exist in the registry, so it's skipped.
+    // The function falls through to gemini which is configured.
+    expect(result.provider).toBe("gemini");
   });
 
-  it("throws for unknown fallback provider", async () => {
+  it("skips unknown fallback provider and still throws when all known fail", async () => {
     mockEnv.AI_PROVIDER_FALLBACK = "nonexistent";
     mockGeminiGenerate.mockRejectedValue(new Error("primary down"));
+    mockGroqGenerate.mockRejectedValue(new Error("also down"));
 
-    await expect(callAIWithFallback(params)).rejects.toThrow("Unknown fallback AI provider: nonexistent");
+    await expect(callAIWithFallback(params)).rejects.toThrow("AI providers unavailable");
   });
 });
