@@ -1,9 +1,10 @@
 import { type Request, type Response, type NextFunction } from "express";
 import { requireAuth as clerkRequireAuth } from "@clerk/express";
+import mongoose from "mongoose";
 import { UnauthorizedError } from "../utils/app-error";
 import type { Role } from "../constants";
 
-type AuthRequest = Request & { auth?: { userId?: string } };
+type AuthRequest = Request & { auth?: () => { userId?: string } };
 
 interface CachedUser {
   id: string;
@@ -41,7 +42,7 @@ export const requireAuth = [
   clerkRequireAuth(),
   async (req: AuthRequest, _res: Response, next: NextFunction) => {
     try {
-      const clerkUserId = req.auth?.userId;
+      const clerkUserId = req.auth?.()?.userId;
       if (!clerkUserId) throw UnauthorizedError("Invalid token");
 
       const cached = getCachedUser(clerkUserId);
@@ -54,12 +55,17 @@ export const requireAuth = [
       const dbUser = await UsersService.getByClerkId(clerkUserId);
       if (!dbUser || !dbUser.isActive) throw UnauthorizedError("User not found or inactive");
 
+      const agencyIdStr = dbUser.agencyId?.toString() || "";
+      if (!agencyIdStr || !mongoose.Types.ObjectId.isValid(agencyIdStr)) {
+        throw UnauthorizedError("User account not fully configured — contact support");
+      }
+
       const userData: CachedUser = {
         id: dbUser._id.toString(),
         clerkId: dbUser.clerkId,
         email: dbUser.email,
         role: dbUser.role,
-        agencyId: dbUser.agencyId?.toString() || "",
+        agencyId: agencyIdStr,
       };
       setCachedUser(clerkUserId, userData);
       req.user = userData;
