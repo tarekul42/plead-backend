@@ -24,6 +24,7 @@ import { usersRouter } from "./modules/users";
 
 import { GeminiProvider } from "./modules/ai/providers/gemini.provider";
 import { GroqProvider } from "./modules/ai/providers/groq.provider";
+import { OpenRouterProvider } from "./modules/ai/providers/openrouter.provider";
 
 import cookieParser from "cookie-parser";
 
@@ -35,11 +36,14 @@ async function getAIProviderHealth() {
   if (healthCache && healthCache.expiresAt > now) return healthCache.status;
   const gemini = new GeminiProvider();
   const groq = new GroqProvider();
-  const [geminiHealthy, groqHealthy] = await Promise.all([
-    gemini.isHealthy().catch(() => false),
-    groq.isHealthy().catch(() => false),
+  const openrouter = new OpenRouterProvider();
+  const results = await Promise.allSettled([
+    env.GEMINI_API_KEY ? gemini.isHealthy() : Promise.resolve(false),
+    env.GROQ_API_KEY ? groq.isHealthy() : Promise.resolve(false),
+    env.OPENROUTER_API_KEY ? openrouter.isHealthy() : Promise.resolve(false),
   ]);
-  const status = geminiHealthy || groqHealthy ? "healthy" : "degraded";
+  const anyHealthy = results.some((r) => r.status === "fulfilled" && r.value);
+  const status = anyHealthy ? "healthy" : "degraded";
   healthCache = { status, expiresAt: now + HEALTH_CACHE_TTL };
   return status;
 }
@@ -107,7 +111,7 @@ app.get("/health", async (_req, res) => {
   res.json({
     status: dbState === 1 && aiStatus === "healthy" ? "ok" : "degraded",
     db: dbStatus,
-    ai: { status: aiStatus, primary: env.AI_PROVIDER_PRIMARY, fallback: env.AI_PROVIDER_FALLBACK },
+    ai: { status: aiStatus, configured: ["gemini", "openrouter", "groq"].filter((p) => { switch (p) { case "gemini": return !!env.GEMINI_API_KEY; case "openrouter": return !!env.OPENROUTER_API_KEY; case "groq": return !!env.GROQ_API_KEY; default: return false; } }) },
     timestamp: Date.now(),
     uptime: process.uptime(),
     memory: process.memoryUsage().rss,

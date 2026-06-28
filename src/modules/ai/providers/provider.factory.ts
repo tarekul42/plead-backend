@@ -11,28 +11,46 @@ const providers: Record<string, AIProvider> = {
   openrouter: new OpenRouterProvider(),
 };
 
+const providerOrder = ["gemini", "openrouter", "groq"];
+
+function isProviderConfigured(name: string): boolean {
+  switch (name) {
+    case "gemini":
+      return !!env.GEMINI_API_KEY;
+    case "groq":
+      return !!env.GROQ_API_KEY;
+    case "openrouter":
+      return !!env.OPENROUTER_API_KEY;
+    default:
+      return false;
+  }
+}
+
 export async function callAIWithFallback(params: {
   system: string;
   user: string;
   schema: Record<string, unknown>;
   temperature?: number;
 }): Promise<{ data: unknown; tokensUsed: number; provider: string }> {
-  const primary = providers[env.AI_PROVIDER_PRIMARY];
-  if (!primary) throw new Error(`Unknown primary AI provider: ${env.AI_PROVIDER_PRIMARY}`);
-  const fallback = providers[env.AI_PROVIDER_FALLBACK];
-  if (!fallback) throw new Error(`Unknown fallback AI provider: ${env.AI_PROVIDER_FALLBACK}`);
+  const available = providerOrder.filter((name) => isProviderConfigured(name));
+  if (available.length === 0) {
+    throw new Error("No AI providers configured");
+  }
 
-  try {
-    const result = await primary.generateJSON(params);
-    return { ...result, provider: primary.name };
-  } catch (err) {
-    logger.error({ err }, "Primary AI failed, trying fallback");
+  const errors: string[] = [];
+  for (const name of available) {
+    const provider = providers[name];
+    if (!provider) continue;
     try {
-      const result = await fallback.generateJSON(params);
-      return { ...result, provider: fallback.name };
-    } catch (fallbackErr) {
-      logger.error({ fallbackErr }, "Both AI providers failed");
-      throw new Error("AI providers unavailable");
+      const result = await provider.generateJSON(params);
+      return { ...result, provider: provider.name };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error({ err, provider: name }, `${name} AI failed`);
+      errors.push(`${name}: ${message}`);
     }
   }
+
+  logger.error({ errors }, "All AI providers failed");
+  throw new Error("AI providers unavailable");
 }

@@ -16,8 +16,6 @@ const envSchema = z.object({
   GROQ_MODEL: z.string().default("llama-3.1-8b-instant"),
   OPENROUTER_API_KEY: isProduction ? z.string().min(1) : z.string().optional().default(""),
   OPENROUTER_MODEL: z.string().default("google/gemma-2-9b-it:free"),
-  AI_PROVIDER_PRIMARY: z.enum(["gemini", "groq", "openrouter"]).default("openrouter"),
-  AI_PROVIDER_FALLBACK: z.enum(["gemini", "groq", "openrouter"]).default("openrouter"),
   AI_CACHE_TTL_HOURS: z.coerce.number().default(24),
   AI_RATE_LIMIT_PER_USER_PER_HOUR: z.coerce.number().default(10),
   CLOUDINARY_CLOUD_NAME: isProduction ? z.string().min(1) : z.string().optional().default(""),
