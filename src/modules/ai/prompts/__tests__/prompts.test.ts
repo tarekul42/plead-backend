@@ -36,8 +36,8 @@ describe("buildMatchEngineUserPrompt", () => {
     expect(result).toBe(
       JSON.stringify({
         lead: Object.keys(circular),
-        properties: properties.map(p => p._id),
-      })
+        properties: properties.map((p) => p._id),
+      }),
     );
   });
 
@@ -49,7 +49,7 @@ describe("buildMatchEngineUserPrompt", () => {
       JSON.stringify({
         lead: Object.keys(lead),
         properties: [circularProp._id],
-      })
+      }),
     );
   });
 
@@ -92,7 +92,7 @@ describe("buildOutreachEmailUserPrompt", () => {
     circular.self = circular;
     const result = buildOutreachEmailUserPrompt(circular, property, "professional");
     expect(result).toBe(
-      JSON.stringify({ lead: circular.name, property: property.title, tone: "professional" })
+      JSON.stringify({ lead: circular.name, property: property.title, tone: "professional" }),
     );
   });
 
@@ -101,7 +101,7 @@ describe("buildOutreachEmailUserPrompt", () => {
     circularProp.self = circularProp;
     const result = buildOutreachEmailUserPrompt(lead, circularProp, "friendly");
     expect(result).toBe(
-      JSON.stringify({ lead: lead.name, property: circularProp.title, tone: "friendly" })
+      JSON.stringify({ lead: lead.name, property: circularProp.title, tone: "friendly" }),
     );
   });
 });
@@ -138,9 +138,7 @@ describe("buildPropertyDescriptionUserPrompt", () => {
     const circular: any = { ...property };
     circular.self = circular;
     const result = buildPropertyDescriptionUserPrompt(circular, "luxury");
-    expect(result).toBe(
-      JSON.stringify({ property: circular.title, tone: "luxury" })
-    );
+    expect(result).toBe(JSON.stringify({ property: circular.title, tone: "luxury" }));
   });
 
   it("returns string even with empty property", () => {

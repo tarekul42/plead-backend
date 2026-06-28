@@ -20,7 +20,9 @@ const AGENT_SELECT = "name email avatarUrl";
 async function findById(id: string, agencyId: string): Promise<IProperty | null> {
   const query: Record<string, unknown> = { _id: id, agencyId };
   return PropertyModel.findOne(query)
-    .populate<{ assignedAgent: { _id: unknown; name: string; email: string; avatarUrl?: string } | null }>("assignedAgentId", AGENT_SELECT)
+    .populate<{
+      assignedAgent: { _id: unknown; name: string; email: string; avatarUrl?: string } | null;
+    }>("assignedAgentId", AGENT_SELECT)
     .lean();
 }
 
@@ -30,9 +32,9 @@ const sortMap: Record<string, string> = {
   "price-asc": "price",
   "price-desc": "price",
   "-createdAt": "createdAt",
-  "createdAt": "createdAt",
+  createdAt: "createdAt",
   "-views": "views",
-  "views": "views",
+  views: "views",
 };
 
 export const PropertiesRepository = {
@@ -54,7 +56,9 @@ export const PropertiesRepository = {
 
   async findBySlug(slug: string, agencyId: string): Promise<IProperty | null> {
     return PropertyModel.findOne({ slug, agencyId })
-      .populate<{ assignedAgent: { _id: unknown; name: string; email: string; avatarUrl?: string } | null }>("assignedAgentId", AGENT_SELECT)
+      .populate<{
+        assignedAgent: { _id: unknown; name: string; email: string; avatarUrl?: string } | null;
+      }>("assignedAgentId", AGENT_SELECT)
       .lean();
   },
 

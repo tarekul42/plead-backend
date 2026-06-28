@@ -126,13 +126,20 @@ describe("UsersController", () => {
       const updated = { ...mockUser, title: "Senior Agent" };
       (UsersService.updateById as jest.Mock).mockResolvedValue(updated);
 
-      const req = mockReq({ params: { id: "507f1f77bcf86cd799439011" }, body: { title: "Senior Agent" } });
+      const req = mockReq({
+        params: { id: "507f1f77bcf86cd799439011" },
+        body: { title: "Senior Agent" },
+      });
       const res = mockRes();
       const next = jest.fn();
 
       await UsersController.update(req, res, next);
 
-      expect(UsersService.updateById).toHaveBeenCalledWith("507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012", { title: "Senior Agent" });
+      expect(UsersService.updateById).toHaveBeenCalledWith(
+        "507f1f77bcf86cd799439011",
+        "507f1f77bcf86cd799439012",
+        { title: "Senior Agent" },
+      );
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({ success: true, data: updated }),
       );

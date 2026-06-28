@@ -1,8 +1,4 @@
-import {
-  createAgencySchema,
-  updateAgencySchema,
-  agencyParamSchema,
-} from "../agencies.validation";
+import { createAgencySchema, updateAgencySchema, agencyParamSchema } from "../agencies.validation";
 
 describe("Agencies validation schemas", () => {
   describe("createAgencySchema", () => {

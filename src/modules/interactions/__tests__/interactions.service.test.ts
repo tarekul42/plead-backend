@@ -31,7 +31,15 @@ describe("InteractionsService", () => {
 
       const result = await InteractionsService.listByAgency("agency1");
 
-      expect(InteractionsRepository.listByAgency).toHaveBeenCalledWith("agency1", 1, 50, undefined, undefined, undefined, undefined);
+      expect(InteractionsRepository.listByAgency).toHaveBeenCalledWith(
+        "agency1",
+        1,
+        50,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
       expect(result).toEqual(listResult);
     });
 
@@ -40,7 +48,15 @@ describe("InteractionsService", () => {
 
       await InteractionsService.listByAgency("agency1", 2, 25);
 
-      expect(InteractionsRepository.listByAgency).toHaveBeenCalledWith("agency1", 2, 25, undefined, undefined, undefined, undefined);
+      expect(InteractionsRepository.listByAgency).toHaveBeenCalledWith(
+        "agency1",
+        2,
+        25,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
     });
   });
 
@@ -51,7 +67,15 @@ describe("InteractionsService", () => {
 
       const result = await InteractionsService.listByUser("userId", "agency1");
 
-      expect(InteractionsRepository.listByUser).toHaveBeenCalledWith("userId", "agency1", 1, 50, undefined, undefined, undefined);
+      expect(InteractionsRepository.listByUser).toHaveBeenCalledWith(
+        "userId",
+        "agency1",
+        1,
+        50,
+        undefined,
+        undefined,
+        undefined,
+      );
       expect(result).toEqual(listResult);
     });
   });
@@ -73,7 +97,12 @@ describe("InteractionsService", () => {
       (LeadModel.exists as jest.Mock).mockResolvedValue({ _id: "leadId" });
       (InteractionsRepository.create as jest.Mock).mockResolvedValue(mockInteraction);
 
-      const data = { leadId: "leadId", agencyId: "agency1", type: "call" as const, performedById: "userId" } as unknown as Partial<IInteraction>;
+      const data = {
+        leadId: "leadId",
+        agencyId: "agency1",
+        type: "call" as const,
+        performedById: "userId",
+      } as unknown as Partial<IInteraction>;
       const result = await InteractionsService.create(data);
 
       expect(LeadModel.exists).toHaveBeenCalledWith({ _id: "leadId", agencyId: "agency1" });
@@ -84,7 +113,12 @@ describe("InteractionsService", () => {
     it("should throw NotFoundError when lead does not exist", async () => {
       (LeadModel.exists as jest.Mock).mockResolvedValue(null);
 
-      const data = { leadId: "badLead", agencyId: "agency1", type: "call" as const, performedById: "userId" } as unknown as Partial<IInteraction>;
+      const data = {
+        leadId: "badLead",
+        agencyId: "agency1",
+        type: "call" as const,
+        performedById: "userId",
+      } as unknown as Partial<IInteraction>;
 
       await expect(InteractionsService.create(data)).rejects.toThrow(AppError);
       await expect(InteractionsService.create(data)).rejects.toMatchObject({ statusCode: 404 });
@@ -98,17 +132,27 @@ describe("InteractionsService", () => {
       (InteractionsRepository.findById as jest.Mock).mockResolvedValue(mockInteraction);
       (InteractionsRepository.update as jest.Mock).mockResolvedValue(updated);
 
-      const result = await InteractionsService.update("id1", "agency1", mockInteraction.performedById, "agent", { notes: "Updated notes" });
+      const result = await InteractionsService.update(
+        "id1",
+        "agency1",
+        mockInteraction.performedById,
+        "agent",
+        { notes: "Updated notes" },
+      );
 
       expect(InteractionsRepository.findById).toHaveBeenCalledWith("id1", "agency1");
-      expect(InteractionsRepository.update).toHaveBeenCalledWith("id1", "agency1", { notes: "Updated notes" });
+      expect(InteractionsRepository.update).toHaveBeenCalledWith("id1", "agency1", {
+        notes: "Updated notes",
+      });
       expect(result).toEqual(updated);
     });
 
     it("should return null when interaction not found", async () => {
       (InteractionsRepository.findById as jest.Mock).mockResolvedValue(null);
 
-      const result = await InteractionsService.update("id1", "agency1", "user1", "manager", { notes: "Updated" });
+      const result = await InteractionsService.update("id1", "agency1", "user1", "manager", {
+        notes: "Updated",
+      });
 
       expect(result).toBeNull();
       expect(InteractionsRepository.update).not.toHaveBeenCalled();

@@ -12,7 +12,7 @@ export async function connectDB() {
     } catch (err) {
       if (attempt < maxRetries) {
         logger.warn({ attempt }, "MongoDB connection attempt failed, retrying...");
-        await new Promise(r => setTimeout(r, attempt * 1000));
+        await new Promise((r) => setTimeout(r, attempt * 1000));
       } else {
         logger.fatal({ err }, "MongoDB connection failed after all retries");
         throw err;
@@ -21,12 +21,8 @@ export async function connectDB() {
   }
   logger.info("MongoDB connected");
 
-  mongoose.connection.on("error", (err) =>
-    logger.error({ err }, "MongoDB connection error"),
-  );
-  mongoose.connection.on("disconnected", () =>
-    logger.warn("MongoDB disconnected"),
-  );
+  mongoose.connection.on("error", (err) => logger.error({ err }, "MongoDB connection error"));
+  mongoose.connection.on("disconnected", () => logger.warn("MongoDB disconnected"));
 }
 
 export async function closeDB() {

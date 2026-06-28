@@ -16,15 +16,20 @@ export const BlogsService = {
 
   async create(data: Partial<IBlog>) {
     const agencyId = data.agencyId ? String(data.agencyId) : "";
-    const base = data.title
-      ?.toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)+/g, "") || "post";
+    const base =
+      data.title
+        ?.toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)+/g, "") || "post";
     let slug = base;
-    while (agencyId && await BlogsRepository.findBySlug(slug, agencyId)) {
+    while (agencyId && (await BlogsRepository.findBySlug(slug, agencyId))) {
       slug = `${base}-${Date.now()}`;
     }
-    return BlogsRepository.create({ ...data, slug, publishedAt: data.status === "published" ? new Date() : undefined });
+    return BlogsRepository.create({
+      ...data,
+      slug,
+      publishedAt: data.status === "published" ? new Date() : undefined,
+    });
   },
 
   async update(id: string, agencyId: string, data: Partial<IBlog>) {

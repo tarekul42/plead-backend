@@ -76,7 +76,9 @@ describe("InteractionsRepository", () => {
   describe("findById", () => {
     it("queries with _id + agencyId + lean, returns interaction", async () => {
       const doc = { _id: "abc", agencyId: "agency_1", type: "email" };
-      (jest.requireMock("../interactions.model").InteractionModel.findOne as jest.Mock).mockReturnValue({
+      (
+        jest.requireMock("../interactions.model").InteractionModel.findOne as jest.Mock
+      ).mockReturnValue({
         lean: jest.fn().mockResolvedValue(doc),
       });
 
@@ -86,7 +88,9 @@ describe("InteractionsRepository", () => {
     });
 
     it("returns null when not found", async () => {
-      (jest.requireMock("../interactions.model").InteractionModel.findOne as jest.Mock).mockReturnValue({
+      (
+        jest.requireMock("../interactions.model").InteractionModel.findOne as jest.Mock
+      ).mockReturnValue({
         lean: jest.fn().mockResolvedValue(null),
       });
 
@@ -99,7 +103,9 @@ describe("InteractionsRepository", () => {
   describe("create", () => {
     it("calls InteractionModel.create with data", async () => {
       const data = { type: "email", agencyId: "agency_1", performedById: "user_1" };
-      (jest.requireMock("../interactions.model").InteractionModel.create as jest.Mock).mockResolvedValue(data);
+      (
+        jest.requireMock("../interactions.model").InteractionModel.create as jest.Mock
+      ).mockResolvedValue(data);
 
       const result = await InteractionsRepository.create(data as any);
 
@@ -110,17 +116,25 @@ describe("InteractionsRepository", () => {
   describe("update", () => {
     it("calls findOneAndUpdate with { new: true }", async () => {
       const updated = { _id: "abc", agencyId: "agency_1", type: "call" };
-      (jest.requireMock("../interactions.model").InteractionModel.findOneAndUpdate as jest.Mock).mockResolvedValue(updated);
+      (
+        jest.requireMock("../interactions.model").InteractionModel.findOneAndUpdate as jest.Mock
+      ).mockResolvedValue(updated);
 
-      const result = await InteractionsRepository.update("abc", "agency_1", { type: "call" } as any);
+      const result = await InteractionsRepository.update("abc", "agency_1", {
+        type: "call",
+      } as any);
 
       expect(result).toEqual(updated);
     });
 
     it("returns null when not found", async () => {
-      (jest.requireMock("../interactions.model").InteractionModel.findOneAndUpdate as jest.Mock).mockResolvedValue(null);
+      (
+        jest.requireMock("../interactions.model").InteractionModel.findOneAndUpdate as jest.Mock
+      ).mockResolvedValue(null);
 
-      const result = await InteractionsRepository.update("nonexistent", "agency_1", { type: "call" } as any);
+      const result = await InteractionsRepository.update("nonexistent", "agency_1", {
+        type: "call",
+      } as any);
 
       expect(result).toBeNull();
     });
@@ -128,7 +142,9 @@ describe("InteractionsRepository", () => {
 
   describe("delete", () => {
     it("returns true when deleted", async () => {
-      (jest.requireMock("../interactions.model").InteractionModel.deleteOne as jest.Mock).mockResolvedValue({ deletedCount: 1 });
+      (
+        jest.requireMock("../interactions.model").InteractionModel.deleteOne as jest.Mock
+      ).mockResolvedValue({ deletedCount: 1 });
 
       const result = await InteractionsRepository.delete("abc", "agency_1");
 
@@ -136,7 +152,9 @@ describe("InteractionsRepository", () => {
     });
 
     it("returns false when nothing deleted", async () => {
-      (jest.requireMock("../interactions.model").InteractionModel.deleteOne as jest.Mock).mockResolvedValue({ deletedCount: 0 });
+      (
+        jest.requireMock("../interactions.model").InteractionModel.deleteOne as jest.Mock
+      ).mockResolvedValue({ deletedCount: 0 });
 
       const result = await InteractionsRepository.delete("nonexistent", "agency_1");
 

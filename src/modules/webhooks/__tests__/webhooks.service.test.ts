@@ -35,7 +35,10 @@ describe("WebhooksService", () => {
 
   describe("handleUserCreated", () => {
     it("upserts a user with mapped fields", async () => {
-      mockFindOneAndUpdate.mockResolvedValue({ clerkId: "user_clerk123", email: "jane@example.com" });
+      mockFindOneAndUpdate.mockResolvedValue({
+        clerkId: "user_clerk123",
+        email: "jane@example.com",
+      });
 
       const result = await WebhooksService.handleUserCreated(validUser as any);
 
@@ -72,7 +75,10 @@ describe("WebhooksService", () => {
     });
 
     it("falls back to default role when role is invalid", async () => {
-      const badRole = { ...validUser, public_metadata: { role: "superadmin", agencyId: "507f1f77bcf86cd799439011" } };
+      const badRole = {
+        ...validUser,
+        public_metadata: { role: "superadmin", agencyId: "507f1f77bcf86cd799439011" },
+      };
       mockFindOneAndUpdate.mockResolvedValue({});
 
       await WebhooksService.handleUserCreated(badRole as any);
@@ -128,7 +134,10 @@ describe("WebhooksService", () => {
 
   describe("handleUserUpdated", () => {
     it("updates user fields", async () => {
-      mockFindOneAndUpdate.mockResolvedValue({ clerkId: "user_clerk123", email: "jane@example.com" });
+      mockFindOneAndUpdate.mockResolvedValue({
+        clerkId: "user_clerk123",
+        email: "jane@example.com",
+      });
 
       const result = await WebhooksService.handleUserUpdated(validUser as any);
 
@@ -186,9 +195,7 @@ describe("WebhooksService", () => {
       await WebhooksService.handleUserUpdated(fullMeta as any);
 
       const [, updateArg] = mockFindOneAndUpdate.mock.calls[0];
-      expect(updateArg).toEqual(
-        expect.objectContaining({ role: "admin" }),
-      );
+      expect(updateArg).toEqual(expect.objectContaining({ role: "admin" }));
       expect(updateArg.agencyId).toBeDefined();
     });
   });

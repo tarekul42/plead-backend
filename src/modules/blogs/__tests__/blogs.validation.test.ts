@@ -55,32 +55,56 @@ describe("createBlogSchema", () => {
   });
 
   it("should reject invalid status value", () => {
-    const result = createBlogSchema.safeParse({ title: "My Post", content: "Hello", status: "archived" });
+    const result = createBlogSchema.safeParse({
+      title: "My Post",
+      content: "Hello",
+      status: "archived",
+    });
     expect(result.success).toBe(false);
   });
 
   it("should accept draft status", () => {
-    const result = createBlogSchema.safeParse({ title: "My Post", content: "Hello", status: "draft" });
+    const result = createBlogSchema.safeParse({
+      title: "My Post",
+      content: "Hello",
+      status: "draft",
+    });
     expect(result.success).toBe(true);
   });
 
   it("should accept published status", () => {
-    const result = createBlogSchema.safeParse({ title: "My Post", content: "Hello", status: "published" });
+    const result = createBlogSchema.safeParse({
+      title: "My Post",
+      content: "Hello",
+      status: "published",
+    });
     expect(result.success).toBe(true);
   });
 
   it("should reject excerpt exceeding 500 characters", () => {
-    const result = createBlogSchema.safeParse({ title: "My Post", content: "Hello", excerpt: "a".repeat(501) });
+    const result = createBlogSchema.safeParse({
+      title: "My Post",
+      content: "Hello",
+      excerpt: "a".repeat(501),
+    });
     expect(result.success).toBe(false);
   });
 
   it("should accept excerpt at exactly 500 characters", () => {
-    const result = createBlogSchema.safeParse({ title: "My Post", content: "Hello", excerpt: "a".repeat(500) });
+    const result = createBlogSchema.safeParse({
+      title: "My Post",
+      content: "Hello",
+      excerpt: "a".repeat(500),
+    });
     expect(result.success).toBe(true);
   });
 
   it("should reject non-array tags", () => {
-    const result = createBlogSchema.safeParse({ title: "My Post", content: "Hello", tags: "real-estate" });
+    const result = createBlogSchema.safeParse({
+      title: "My Post",
+      content: "Hello",
+      tags: "real-estate",
+    });
     expect(result.success).toBe(false);
   });
 });

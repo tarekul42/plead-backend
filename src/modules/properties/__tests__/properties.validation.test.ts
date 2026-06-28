@@ -41,7 +41,7 @@ describe("createPropertySchema", () => {
   });
 
   it("rejects a missing required field (title)", () => {
-    const { title, ...payload } = validCreatePayload();
+    const { title: _title, ...payload } = validCreatePayload();
     const result = createPropertySchema.safeParse(payload);
     expect(result.success).toBe(false);
   });
@@ -52,17 +52,26 @@ describe("createPropertySchema", () => {
   });
 
   it("rejects a title longer than 200 characters", () => {
-    const result = createPropertySchema.safeParse({ ...validCreatePayload(), title: "a".repeat(201) });
+    const result = createPropertySchema.safeParse({
+      ...validCreatePayload(),
+      title: "a".repeat(201),
+    });
     expect(result.success).toBe(false);
   });
 
   it("accepts a title at the 200-character boundary", () => {
-    const result = createPropertySchema.safeParse({ ...validCreatePayload(), title: "a".repeat(200) });
+    const result = createPropertySchema.safeParse({
+      ...validCreatePayload(),
+      title: "a".repeat(200),
+    });
     expect(result.success).toBe(true);
   });
 
   it("rejects a description longer than 2000 characters", () => {
-    const result = createPropertySchema.safeParse({ ...validCreatePayload(), description: "a".repeat(2001) });
+    const result = createPropertySchema.safeParse({
+      ...validCreatePayload(),
+      description: "a".repeat(2001),
+    });
     expect(result.success).toBe(false);
   });
 
@@ -77,7 +86,10 @@ describe("createPropertySchema", () => {
   });
 
   it("rejects an invalid propertyType enum", () => {
-    const result = createPropertySchema.safeParse({ ...validCreatePayload(), propertyType: "castle" });
+    const result = createPropertySchema.safeParse({
+      ...validCreatePayload(),
+      propertyType: "castle",
+    });
     expect(result.success).toBe(false);
   });
 
@@ -97,12 +109,15 @@ describe("createPropertySchema", () => {
   });
 
   it("rejects an invalid assignedAgentId (ObjectId)", () => {
-    const result = createPropertySchema.safeParse({ ...validCreatePayload(), assignedAgentId: "not-an-id" });
+    const result = createPropertySchema.safeParse({
+      ...validCreatePayload(),
+      assignedAgentId: "not-an-id",
+    });
     expect(result.success).toBe(false);
   });
 
   it("rejects a missing assignedAgentId", () => {
-    const { assignedAgentId, ...payload } = validCreatePayload();
+    const { assignedAgentId: _assignedAgentId, ...payload } = validCreatePayload();
     const result = createPropertySchema.safeParse(payload);
     expect(result.success).toBe(false);
   });

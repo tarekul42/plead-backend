@@ -17,8 +17,16 @@ import { AgenciesController } from "../agencies.controller";
 
 function mockReq(overrides: Partial<Request> = {}): Request {
   return {
-    user: { id: "user_1", agencyId: "agency_1", role: "admin", clerkId: "clerk_1", email: "a@b.com" },
-    params: {}, query: {}, body: {},
+    user: {
+      id: "user_1",
+      agencyId: "agency_1",
+      role: "admin",
+      clerkId: "clerk_1",
+      email: "a@b.com",
+    },
+    params: {},
+    query: {},
+    body: {},
     ...overrides,
   } as Request;
 }
@@ -38,7 +46,8 @@ describe("AgenciesController", () => {
 
   it("list returns agencies with pagination meta", async () => {
     const req = mockReq({ query: { page: "1", limit: "20" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.list.mockResolvedValue({ data: [{ id: "a1" }], total: 1 });
 
     await AgenciesController.list(req, res, next);
@@ -48,7 +57,8 @@ describe("AgenciesController", () => {
 
   it("create returns 201 with agency", async () => {
     const req = mockReq({ body: { name: "Agency" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.create.mockResolvedValue({ id: "new" });
 
     await AgenciesController.create(req, res, next);
@@ -59,7 +69,8 @@ describe("AgenciesController", () => {
 
   it("getById returns agency", async () => {
     const req = mockReq({ params: { id: "abc" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.getById.mockResolvedValue({ _id: "abc" });
 
     await AgenciesController.getById(req, res, next);
@@ -68,7 +79,8 @@ describe("AgenciesController", () => {
 
   it("getById throws NotFoundError when missing", async () => {
     const req = mockReq({ params: { id: "abc" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.getById.mockResolvedValue(null);
 
     await AgenciesController.getById(req, res, next);
@@ -77,7 +89,8 @@ describe("AgenciesController", () => {
 
   it("update returns updated agency", async () => {
     const req = mockReq({ params: { id: "abc" }, body: { name: "Updated" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.update.mockResolvedValue({ _id: "abc", name: "Updated" });
 
     await AgenciesController.update(req, res, next);
@@ -87,7 +100,8 @@ describe("AgenciesController", () => {
 
   it("update throws NotFoundError when null", async () => {
     const req = mockReq({ params: { id: "abc" }, body: { name: "Updated" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.update.mockResolvedValue(null);
 
     await AgenciesController.update(req, res, next);
@@ -96,7 +110,8 @@ describe("AgenciesController", () => {
 
   it("delete returns success", async () => {
     const req = mockReq({ params: { id: "abc" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.delete.mockResolvedValue(true);
 
     await AgenciesController.delete(req, res, next);
@@ -106,7 +121,8 @@ describe("AgenciesController", () => {
 
   it("delete throws NotFoundError when false", async () => {
     const req = mockReq({ params: { id: "abc" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.delete.mockResolvedValue(false);
 
     await AgenciesController.delete(req, res, next);

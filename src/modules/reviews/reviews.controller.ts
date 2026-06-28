@@ -20,7 +20,10 @@ export const ReviewsController = {
   listByProperty: asyncHandler(async (req: Request, res: Response) => {
     const { page, limit } = Pagination.from(req.query, 50, 100);
     const { data, total } = await ReviewsService.listByProperty(
-      String(req.params.propertyId), req.user!.agencyId, page, limit,
+      String(req.params.propertyId),
+      req.user!.agencyId,
+      page,
+      limit,
     );
     res.json(success(data, Pagination.meta(page, limit, total)));
   }),
@@ -36,13 +39,24 @@ export const ReviewsController = {
   }),
 
   update: asyncHandler(async (req: Request, res: Response) => {
-    const review = await ReviewsService.update(String(req.params.id), req.user!.agencyId, req.user!.id, req.user!.role, req.body);
+    const review = await ReviewsService.update(
+      String(req.params.id),
+      req.user!.agencyId,
+      req.user!.id,
+      req.user!.role,
+      req.body,
+    );
     if (!review) throw NotFoundError("Review");
     res.json(success(review));
   }),
 
   delete: asyncHandler(async (req: Request, res: Response) => {
-    const deleted = await ReviewsService.delete(String(req.params.id), req.user!.agencyId, req.user!.id, req.user!.role);
+    const deleted = await ReviewsService.delete(
+      String(req.params.id),
+      req.user!.agencyId,
+      req.user!.id,
+      req.user!.role,
+    );
     if (!deleted) throw NotFoundError("Review");
     res.json(success({ deleted: true }));
   }),

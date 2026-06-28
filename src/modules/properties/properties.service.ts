@@ -32,15 +32,21 @@ export const PropertiesService = {
   },
 
   async create(data: Partial<IProperty>) {
-    const agentExists = await UserModel.exists({ _id: data.assignedAgentId, agencyId: data.agencyId });
+    const agentExists = await UserModel.exists({
+      _id: data.assignedAgentId,
+      agencyId: data.agencyId,
+    });
     if (!agentExists) {
-      throw ValidationError([{ message: "Assigned agent not found in your agency", path: ["assignedAgentId"] }]);
+      throw ValidationError([
+        { message: "Assigned agent not found in your agency", path: ["assignedAgentId"] },
+      ]);
     }
 
-    const base = data.title
-      ?.toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)+/g, "") || "property";
+    const base =
+      data.title
+        ?.toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)+/g, "") || "property";
     let slug = base;
     while (await PropertyModel.findOne({ slug, agencyId: data.agencyId }).lean()) {
       slug = `${base}-${Date.now()}`;
@@ -55,7 +61,9 @@ export const PropertiesService = {
     if (data.assignedAgentId) {
       const agentExists = await UserModel.exists({ _id: data.assignedAgentId, agencyId });
       if (!agentExists) {
-        throw ValidationError([{ message: "Assigned agent not found in your agency", path: ["assignedAgentId"] }]);
+        throw ValidationError([
+          { message: "Assigned agent not found in your agency", path: ["assignedAgentId"] },
+        ]);
       }
     }
 

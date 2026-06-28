@@ -3,7 +3,10 @@ import { LeadsRepository } from "./leads.repository";
 import { LeadModel, ILead } from "./leads.model";
 
 export const LeadsService = {
-  async list(query: { status?: string; assignedAgentId?: string; q?: string; page: number; limit: number }, agencyId: string) {
+  async list(
+    query: { status?: string; assignedAgentId?: string; q?: string; page: number; limit: number },
+    agencyId: string,
+  ) {
     return LeadsRepository.list({ ...query, agencyId });
   },
 
@@ -27,7 +30,9 @@ export const LeadsService = {
 
   async getStats(filter: { agencyId: string; assignedAgentId?: string }) {
     const agencyOid = new mongoose.Types.ObjectId(filter.agencyId);
-    const agentOid = filter.assignedAgentId ? new mongoose.Types.ObjectId(filter.assignedAgentId) : undefined;
+    const agentOid = filter.assignedAgentId
+      ? new mongoose.Types.ObjectId(filter.assignedAgentId)
+      : undefined;
 
     const leadsFilter: Record<string, unknown> = { agencyId: filter.agencyId };
     if (agentOid) leadsFilter.assignedAgentId = agentOid;
@@ -51,7 +56,13 @@ export const LeadsService = {
         },
       ]),
       LeadModel.aggregate([
-        { $match: { agencyId: agencyOid, ...(agentOid ? { assignedAgentId: agentOid } : {}), createdAt: { $gte: sevenDaysAgo } } },
+        {
+          $match: {
+            agencyId: agencyOid,
+            ...(agentOid ? { assignedAgentId: agentOid } : {}),
+            createdAt: { $gte: sevenDaysAgo },
+          },
+        },
         {
           $group: {
             _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },

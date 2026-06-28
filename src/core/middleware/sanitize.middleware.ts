@@ -1,25 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
 
-function sanitizeValue(val: unknown, key: string): unknown {
-  if (["$ne", "$gt", "$gte", "$lt", "$lte", "$regex", "$options", "$exists", "$in", "$nin", "$or", "$and", "$not", "$nor", "$where", "$elemMatch", "$all", "$size", "$mod", "$text", "$search", "$near", "$geoWithin"].includes(key) || key.startsWith("$")) {
-    return undefined;
-  }
-  if (Array.isArray(val)) {
-    return val.map((v, i) => sanitizeValue(v, String(i)));
-  }
-  if (val && typeof val === "object") {
-    const sanitized: Record<string, unknown> = {};
-    for (const k of Object.keys(val as Record<string, unknown>)) {
-      const v = sanitizeValue((val as Record<string, unknown>)[k], k);
-      if (v !== undefined) {
-        sanitized[k] = v;
-      }
-    }
-    return sanitized;
-  }
-  return val;
-}
-
 function sanitize(obj: Record<string, unknown>): void {
   if (!obj || typeof obj !== "object") return;
   for (const key of Object.keys(obj)) {

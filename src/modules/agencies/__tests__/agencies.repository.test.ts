@@ -221,9 +221,7 @@ describe("AgenciesRepository", () => {
         session: jest.fn().mockRejectedValue(transientError),
       });
 
-      await expect(AgenciesRepository.delete("id1")).rejects.toThrow(
-        "Failed to delete agency",
-      );
+      await expect(AgenciesRepository.delete("id1")).rejects.toThrow("Failed to delete agency");
       expect(mockSession.abortTransaction).toHaveBeenCalledTimes(3);
     });
   });

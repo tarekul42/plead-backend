@@ -25,7 +25,10 @@ export const createPropertySchema = z.object({
   baths: z.number().min(0).max(100),
   area: z.number().min(0),
   propertyType: z.enum(["house", "apartment", "condo", "townhouse", "land", "commercial"]),
-  status: z.union([propertyStatusEnum, z.literal("under_contract")]).optional().transform(v => normalizePropertyStatus(v)),
+  status: z
+    .union([propertyStatusEnum, z.literal("under_contract")])
+    .optional()
+    .transform((v) => normalizePropertyStatus(v)),
   features: z.array(z.string()).optional(),
   assignedAgentId: objectId,
 });
@@ -46,8 +49,13 @@ export const updatePropertySchema = z.object({
   beds: z.number().min(0).max(100).optional(),
   baths: z.number().min(0).max(100).optional(),
   area: z.number().min(0).optional(),
-  propertyType: z.enum(["house", "apartment", "condo", "townhouse", "land", "commercial"]).optional(),
-  status: z.union([propertyStatusEnum, z.literal("under_contract")]).optional().transform(v => normalizePropertyStatus(v)),
+  propertyType: z
+    .enum(["house", "apartment", "condo", "townhouse", "land", "commercial"])
+    .optional(),
+  status: z
+    .union([propertyStatusEnum, z.literal("under_contract")])
+    .optional()
+    .transform((v) => normalizePropertyStatus(v)),
   features: z.array(z.string()).optional(),
   assignedAgentId: objectId.optional(),
 });
@@ -63,12 +71,28 @@ export const propertySlugParamSchema = z.object({
 export const listPropertiesQuerySchema = z.object({
   q: z.string().optional(),
   location: z.string().optional(),
-  propertyType: z.enum(["house", "apartment", "condo", "townhouse", "land", "commercial"]).optional(),
+  propertyType: z
+    .enum(["house", "apartment", "condo", "townhouse", "land", "commercial"])
+    .optional(),
   priceMin: z.coerce.number().optional(),
   priceMax: z.coerce.number().optional(),
   beds: z.coerce.number().optional(),
-  status: z.union([propertyStatusEnum, z.literal("under_contract")]).optional().transform(v => normalizePropertyStatus(v)),
-  sort: z.enum(["newest", "oldest", "price-asc", "price-desc", "-createdAt", "-views", "createdAt", "views"]).optional(),
+  status: z
+    .union([propertyStatusEnum, z.literal("under_contract")])
+    .optional()
+    .transform((v) => normalizePropertyStatus(v)),
+  sort: z
+    .enum([
+      "newest",
+      "oldest",
+      "price-asc",
+      "price-desc",
+      "-createdAt",
+      "-views",
+      "createdAt",
+      "views",
+    ])
+    .optional(),
   page: z.coerce.number().default(1),
   limit: z.coerce.number().default(12),
   agencyId: objectId.optional(),

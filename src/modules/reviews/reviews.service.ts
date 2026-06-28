@@ -13,9 +13,14 @@ export const ReviewsService = {
   },
 
   async create(data: Partial<IReview>) {
-    const propertyExists = await PropertyModel.exists({ _id: data.propertyId, agencyId: data.agencyId });
+    const propertyExists = await PropertyModel.exists({
+      _id: data.propertyId,
+      agencyId: data.agencyId,
+    });
     if (!propertyExists) {
-      throw ValidationError([{ message: "Property not found in your agency", path: ["propertyId"] }]);
+      throw ValidationError([
+        { message: "Property not found in your agency", path: ["propertyId"] },
+      ]);
     }
     return ReviewsRepository.create(data);
   },

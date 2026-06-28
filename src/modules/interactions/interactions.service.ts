@@ -4,12 +4,44 @@ import { LeadModel } from "../leads/leads.model";
 import { NotFoundError } from "../../core/utils/app-error";
 
 export const InteractionsService = {
-  async listByAgency(agencyId: string, page = 1, limit = 50, type?: string, leadId?: string, startDate?: string, endDate?: string) {
-    return InteractionsRepository.listByAgency(agencyId, page, limit, type, leadId, startDate, endDate);
+  async listByAgency(
+    agencyId: string,
+    page = 1,
+    limit = 50,
+    type?: string,
+    leadId?: string,
+    startDate?: string,
+    endDate?: string,
+  ) {
+    return InteractionsRepository.listByAgency(
+      agencyId,
+      page,
+      limit,
+      type,
+      leadId,
+      startDate,
+      endDate,
+    );
   },
 
-  async listByUser(userId: string, agencyId: string, page = 1, limit = 50, type?: string, startDate?: string, endDate?: string) {
-    return InteractionsRepository.listByUser(userId, agencyId, page, limit, type, startDate, endDate);
+  async listByUser(
+    userId: string,
+    agencyId: string,
+    page = 1,
+    limit = 50,
+    type?: string,
+    startDate?: string,
+    endDate?: string,
+  ) {
+    return InteractionsRepository.listByUser(
+      userId,
+      agencyId,
+      page,
+      limit,
+      type,
+      startDate,
+      endDate,
+    );
   },
 
   async listByLead(leadId: string, agencyId: string, page = 1, limit = 50) {
@@ -22,7 +54,13 @@ export const InteractionsService = {
     return InteractionsRepository.create(data);
   },
 
-  async update(id: string, agencyId: string, userId: string, role: string, data: Partial<IInteraction>) {
+  async update(
+    id: string,
+    agencyId: string,
+    userId: string,
+    role: string,
+    data: Partial<IInteraction>,
+  ) {
     const existing = await InteractionsRepository.findById(id, agencyId);
     if (!existing) return null;
     if (role === "agent" && existing.performedById?.toString() !== userId) return null;

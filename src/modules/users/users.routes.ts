@@ -14,7 +14,18 @@ usersRouter.use(requireAuth);
 usersRouter.get("/me", UsersController.getMe);
 usersRouter.get("/", StrictRole("manager", "admin"), UsersController.list);
 usersRouter.get("/:id", validate(z.object({ id: objectId }), "params"), UsersController.getById);
-usersRouter.patch("/:id", StrictRole("manager", "admin"), validate(updateUserSchema), validate(z.object({ id: objectId }), "params"), UsersController.update);
-usersRouter.delete("/:id", StrictRole("admin"), validate(z.object({ id: objectId }), "params"), UsersController.delete);
+usersRouter.patch(
+  "/:id",
+  StrictRole("manager", "admin"),
+  validate(updateUserSchema),
+  validate(z.object({ id: objectId }), "params"),
+  UsersController.update,
+);
+usersRouter.delete(
+  "/:id",
+  StrictRole("admin"),
+  validate(z.object({ id: objectId }), "params"),
+  UsersController.delete,
+);
 
 export { usersRouter };

@@ -7,14 +7,15 @@ import { QueryBuilder } from "../../core/utils/query-builder";
 
 export const AdminService = {
   async getAgencyStats(agencyId: string) {
-    const [totalUsers, totalProperties, totalLeads, activeLeads, totalReviews, aiCalls] = await Promise.all([
-      UserModel.countDocuments({ agencyId, isActive: true }),
-      PropertyModel.countDocuments({ agencyId }),
-      LeadModel.countDocuments({ agencyId }),
-      LeadModel.countDocuments({ agencyId, status: { $in: ["new", "contacted", "qualified"] } }),
-      ReviewModel.countDocuments({ agencyId }),
-      AiAnalysisModel.countDocuments({ agencyId }),
-    ]);
+    const [totalUsers, totalProperties, totalLeads, activeLeads, totalReviews, aiCalls] =
+      await Promise.all([
+        UserModel.countDocuments({ agencyId, isActive: true }),
+        PropertyModel.countDocuments({ agencyId }),
+        LeadModel.countDocuments({ agencyId }),
+        LeadModel.countDocuments({ agencyId, status: { $in: ["new", "contacted", "qualified"] } }),
+        ReviewModel.countDocuments({ agencyId }),
+        AiAnalysisModel.countDocuments({ agencyId }),
+      ]);
 
     return {
       totalUsers,

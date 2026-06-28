@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Schema } from "mongoose";
 
 export interface SoftDeletable {

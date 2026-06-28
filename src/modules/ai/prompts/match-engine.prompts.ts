@@ -11,28 +11,31 @@ Return the top matches sorted by score descending.
 Only include properties with a score >= 40.
 Keep reasons concise (1 sentence per match).`;
 
-export function buildMatchEngineUserPrompt(lead: {
-  budget?: number;
-  preferredLocation?: string;
-  bedsDesired?: number;
-  bathsDesired?: number;
-  propertyType?: string;
-  notes?: string;
-}, properties: Array<{
-  _id: string;
-  title: string;
-  price: number;
-  location: string;
-  beds: number;
-  baths: number;
-  area: number;
-  propertyType: string;
-  features: string[];
-}>) {
+export function buildMatchEngineUserPrompt(
+  lead: {
+    budget?: number;
+    preferredLocation?: string;
+    bedsDesired?: number;
+    bathsDesired?: number;
+    propertyType?: string;
+    notes?: string;
+  },
+  properties: Array<{
+    _id: string;
+    title: string;
+    price: number;
+    location: string;
+    beds: number;
+    baths: number;
+    area: number;
+    propertyType: string;
+    features: string[];
+  }>,
+) {
   try {
     return JSON.stringify({ lead, properties });
   } catch {
-    return JSON.stringify({ lead: Object.keys(lead), properties: properties.map(p => p._id) });
+    return JSON.stringify({ lead: Object.keys(lead), properties: properties.map((p) => p._id) });
   }
 }
 

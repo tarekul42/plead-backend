@@ -7,7 +7,6 @@ jest.mock("express-rate-limit", () => jest.fn(() => (req: any, res: any, next: a
 jest.mock("pino-http", () => jest.fn(() => (req: any, res: any, next: any) => next()));
 
 import request from "supertest";
-import mongoose from "mongoose";
 
 let mockReadyState = 1;
 

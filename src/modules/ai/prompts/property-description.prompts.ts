@@ -1,16 +1,19 @@
 export const propertyDescriptionSystemPrompt = `You are a real estate copywriter. Generate compelling property descriptions based on property details.`;
 
-export function buildPropertyDescriptionUserPrompt(property: {
-  title: string;
-  price: number;
-  location: string;
-  beds: number;
-  baths: number;
-  area: number;
-  propertyType: string;
-  features: string[];
-  description: string;
-}, tone: "luxury" | "standard" | "brief") {
+export function buildPropertyDescriptionUserPrompt(
+  property: {
+    title: string;
+    price: number;
+    location: string;
+    beds: number;
+    baths: number;
+    area: number;
+    propertyType: string;
+    features: string[];
+    description: string;
+  },
+  tone: "luxury" | "standard" | "brief",
+) {
   try {
     return JSON.stringify({ property, tone });
   } catch {

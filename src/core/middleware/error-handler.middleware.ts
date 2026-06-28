@@ -25,7 +25,10 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   }
   if (err.code === 11000 || err.code === 11001) {
     const keyValue = (err as Record<string, unknown>).keyValue;
-    const keys = keyValue && typeof keyValue === "object" ? Object.keys(keyValue as Record<string, unknown>) : [];
+    const keys =
+      keyValue && typeof keyValue === "object"
+        ? Object.keys(keyValue as Record<string, unknown>)
+        : [];
     const field = keys.length > 0 ? keys[0] : "field";
     return res.status(409).json(error("DUPLICATE_KEY", `Duplicate value for ${field}`));
   }

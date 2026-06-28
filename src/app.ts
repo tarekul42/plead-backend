@@ -53,31 +53,50 @@ const app = express();
 
 app.set("trust proxy", 1);
 
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https://res.cloudinary.com", "https://*.tile.openstreetmap.org"],
-      connectSrc: ["'self'", ...env.CORS_ORIGIN.split(",").map(s => s.trim()).filter(Boolean), "https://api.clerk.com", "https://clerk.plead.lcl"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      frameSrc: ["'self'", "https://accounts.clerk.com"],
-      objectSrc: ["'none'"],
-      upgradeInsecureRequests: [],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: [
+          "'self'",
+          "data:",
+          "https://res.cloudinary.com",
+          "https://*.tile.openstreetmap.org",
+        ],
+        connectSrc: [
+          "'self'",
+          ...env.CORS_ORIGIN.split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+          "https://api.clerk.com",
+          "https://clerk.plead.lcl",
+        ],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        frameSrc: ["'self'", "https://accounts.clerk.com"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
     },
-  },
-  crossOriginEmbedderPolicy: false,
-}));
+    crossOriginEmbedderPolicy: false,
+  }),
+);
 
-const allowedOrigins = env.CORS_ORIGIN.split(",").map(s => s.trim()).filter(Boolean);
-app.use(cors({
-  origin: (origin, cb) => {
-    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes("*")) return cb(null, true);
-    cb(null, false);
-  },
-  credentials: true,
-}));
+const allowedOrigins = env.CORS_ORIGIN.split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes("*"))
+        return cb(null, true);
+      cb(null, false);
+    },
+    credentials: true,
+  }),
+);
 app.use(cookieParser());
 
 // Security middlewares
@@ -116,20 +135,35 @@ app.get("/", (_req, res) => {
   res.json({
     success: true,
     message: "PropLead API is running",
-    version: "1.0.0"
+    version: "1.0.0",
   });
 });
 
 app.get("/health", async (_req, res) => {
   const dbState = mongoose.connection.readyState;
-  const dbStatus = ["disconnected", "connected", "connecting", "disconnecting"][dbState] || "unknown";
+  const dbStatus =
+    ["disconnected", "connected", "connecting", "disconnecting"][dbState] || "unknown";
 
   const aiStatus = await getAIProviderHealth();
 
   res.json({
     status: dbState === 1 && aiStatus === "healthy" ? "ok" : "degraded",
     db: dbStatus,
-    ai: { status: aiStatus, configured: ["gemini", "openrouter", "groq"].filter((p) => { switch (p) { case "gemini": return !!env.GEMINI_API_KEY; case "openrouter": return !!env.OPENROUTER_API_KEY; case "groq": return !!env.GROQ_API_KEY; default: return false; } }) },
+    ai: {
+      status: aiStatus,
+      configured: ["gemini", "openrouter", "groq"].filter((p) => {
+        switch (p) {
+          case "gemini":
+            return !!env.GEMINI_API_KEY;
+          case "openrouter":
+            return !!env.OPENROUTER_API_KEY;
+          case "groq":
+            return !!env.GROQ_API_KEY;
+          default:
+            return false;
+        }
+      }),
+    },
     timestamp: Date.now(),
     uptime: process.uptime(),
     memory: process.memoryUsage().rss,

@@ -2,7 +2,15 @@ import { InteractionModel, IInteraction } from "./interactions.model";
 import { QueryBuilder } from "../../core/utils/query-builder";
 
 export const InteractionsRepository = {
-  async listByAgency(agencyId: string, page = 1, limit = 50, type?: string, leadId?: string, startDate?: string, endDate?: string) {
+  async listByAgency(
+    agencyId: string,
+    page = 1,
+    limit = 50,
+    type?: string,
+    leadId?: string,
+    startDate?: string,
+    endDate?: string,
+  ) {
     const builder = new QueryBuilder(InteractionModel)
       .where("agencyId", agencyId)
       .where("type", type)
@@ -13,13 +21,18 @@ export const InteractionsRepository = {
       if (endDate) range.$lte = new Date(endDate);
       builder.where("createdAt", range as unknown as string);
     }
-    return builder
-      .sortDesc("createdAt")
-      .paginate(page, limit, 100, 50)
-      .exec();
+    return builder.sortDesc("createdAt").paginate(page, limit, 100, 50).exec();
   },
 
-  async listByUser(userId: string, agencyId: string, page = 1, limit = 50, type?: string, startDate?: string, endDate?: string) {
+  async listByUser(
+    userId: string,
+    agencyId: string,
+    page = 1,
+    limit = 50,
+    type?: string,
+    startDate?: string,
+    endDate?: string,
+  ) {
     const builder = new QueryBuilder(InteractionModel)
       .where("agencyId", agencyId)
       .where("performedById", userId)
@@ -30,10 +43,7 @@ export const InteractionsRepository = {
       if (endDate) range.$lte = new Date(endDate);
       builder.where("createdAt", range as unknown as string);
     }
-    return builder
-      .sortDesc("createdAt")
-      .paginate(page, limit, 100, 50)
-      .exec();
+    return builder.sortDesc("createdAt").paginate(page, limit, 100, 50).exec();
   },
 
   async listByLead(leadId: string, agencyId: string, page = 1, limit = 50) {
@@ -53,7 +63,11 @@ export const InteractionsRepository = {
     return InteractionModel.create(data);
   },
 
-  async update(id: string, agencyId: string, data: Partial<IInteraction>): Promise<IInteraction | null> {
+  async update(
+    id: string,
+    agencyId: string,
+    data: Partial<IInteraction>,
+  ): Promise<IInteraction | null> {
     return InteractionModel.findOneAndUpdate({ _id: id, agencyId }, data, { new: true });
   },
 

@@ -15,7 +15,9 @@ jest.mock("../providers/groq.provider", () => ({
   })),
 }));
 
-jest.mock("../../../core/utils/logger", () => ({ logger: { error: jest.fn(), info: jest.fn(), warn: jest.fn() } }));
+jest.mock("../../../core/utils/logger", () => ({
+  logger: { error: jest.fn(), info: jest.fn(), warn: jest.fn() },
+}));
 
 const mockEnv: Record<string, string | undefined> = {
   AI_PROVIDER_PRIMARY: "gemini",

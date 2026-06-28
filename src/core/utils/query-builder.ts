@@ -15,12 +15,20 @@ export class QueryBuilder<T> {
   }
 
   whereRegex(field: string, value: string, options = "i"): this {
-    if (value) this.filter[field] = { $regex: value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: options };
+    if (value)
+      this.filter[field] = {
+        $regex: value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        $options: options,
+      };
     return this;
   }
 
   wherePrefix(field: string, value: string, options = "i"): this {
-    if (value) this.filter[field] = { $regex: `^${value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, $options: options };
+    if (value)
+      this.filter[field] = {
+        $regex: `^${value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`,
+        $options: options,
+      };
     return this;
   }
 
@@ -58,7 +66,7 @@ export class QueryBuilder<T> {
   search(fields: string[], query?: string, options = "i"): this {
     if (query && fields.length > 0) {
       const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      this.filter.$or = fields.map(f => ({
+      this.filter.$or = fields.map((f) => ({
         [f]: { $regex: escaped, $options: options },
       }));
     }
@@ -79,7 +87,8 @@ export class QueryBuilder<T> {
     const key = sortKey || "newest";
     const field = sortMap[key];
     if (field) {
-      this.sort[field] = key === "oldest" || key === "price-asc" || (key === field && !key.startsWith("-")) ? 1 : -1;
+      this.sort[field] =
+        key === "oldest" || key === "price-asc" || (key === field && !key.startsWith("-")) ? 1 : -1;
     }
     return this;
   }

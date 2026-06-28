@@ -142,7 +142,9 @@ describe("PropertiesService.create - slug generation", () => {
     MockedPropertyModel.findOne
       .mockReturnValueOnce(mockLeanQuery(makeProperty({ slug: "modern-family-home" })) as never)
       .mockReturnValueOnce(
-        mockLeanQuery(makeProperty({ slug: expect.stringMatching(/^modern-family-home-\d+$/) })) as never,
+        mockLeanQuery(
+          makeProperty({ slug: expect.stringMatching(/^modern-family-home-\d+$/) }),
+        ) as never,
       )
       .mockReturnValue(mockLeanQuery(null) as never);
 
@@ -183,7 +185,9 @@ describe("PropertiesService.update", () => {
 
     const result = await PropertiesService.update(PROPERTY_ID, AGENCY_ID, { title: "New Title" });
 
-    expect(MockedRepository.update).toHaveBeenCalledWith(PROPERTY_ID, AGENCY_ID, { title: "New Title" });
+    expect(MockedRepository.update).toHaveBeenCalledWith(PROPERTY_ID, AGENCY_ID, {
+      title: "New Title",
+    });
     expect(result).toEqual(updated);
   });
 });
@@ -220,7 +224,10 @@ describe("PropertiesService.delete", () => {
     expect(result).toBe(true);
     expect(MockedPropertyModel.startSession).toHaveBeenCalled();
     expect(session.startTransaction).toHaveBeenCalled();
-    expect(MockedPropertyModel.deleteOne).toHaveBeenCalledWith({ _id: PROPERTY_ID, agencyId: AGENCY_ID });
+    expect(MockedPropertyModel.deleteOne).toHaveBeenCalledWith({
+      _id: PROPERTY_ID,
+      agencyId: AGENCY_ID,
+    });
     expect(deleteQuery.session).toHaveBeenCalledWith(session);
     expect(MockedReviewModel.deleteMany).toHaveBeenCalledWith({
       propertyId: PROPERTY_ID,

@@ -6,19 +6,35 @@ import { AiService } from "./ai.service";
 export const AiController = {
   matchLeadProperties: asyncHandler(async (req: Request, res: Response) => {
     const { leadId, propertyIds } = req.body;
-    const result = await AiService.matchLeadProperties(leadId, propertyIds, req.user!.id, req.user!.agencyId);
+    const result = await AiService.matchLeadProperties(
+      leadId,
+      propertyIds,
+      req.user!.id,
+      req.user!.agencyId,
+    );
     res.json(success(result));
   }),
 
   generatePropertyDescription: asyncHandler(async (req: Request, res: Response) => {
     const { propertyId, tone } = req.body;
-    const result = await AiService.generatePropertyDescription(propertyId, tone, req.user!.id, req.user!.agencyId);
+    const result = await AiService.generatePropertyDescription(
+      propertyId,
+      tone,
+      req.user!.id,
+      req.user!.agencyId,
+    );
     res.json(success(result));
   }),
 
   generateOutreachEmail: asyncHandler(async (req: Request, res: Response) => {
     const { leadId, propertyId, tone } = req.body;
-    const result = await AiService.generateOutreachEmail(leadId, propertyId, tone, req.user!.id, req.user!.agencyId);
+    const result = await AiService.generateOutreachEmail(
+      leadId,
+      propertyId,
+      tone,
+      req.user!.id,
+      req.user!.agencyId,
+    );
     res.json(success(result));
   }),
 

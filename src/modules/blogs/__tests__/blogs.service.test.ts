@@ -83,10 +83,18 @@ describe("BlogsService", () => {
       (BlogsRepository.findBySlug as jest.Mock).mockResolvedValue(null);
       (BlogsRepository.create as jest.Mock).mockResolvedValue(mockBlog);
 
-      const data = { title: "My First Post", content: "Hello", agencyId: "507f1f77bcf86cd799439012", authorId: "507f1f77bcf86cd799439011" } as unknown as Partial<IBlog>;
+      const data = {
+        title: "My First Post",
+        content: "Hello",
+        agencyId: "507f1f77bcf86cd799439012",
+        authorId: "507f1f77bcf86cd799439011",
+      } as unknown as Partial<IBlog>;
       const result = await BlogsService.create(data);
 
-      expect(BlogsRepository.findBySlug).toHaveBeenCalledWith("my-first-post", "507f1f77bcf86cd799439012");
+      expect(BlogsRepository.findBySlug).toHaveBeenCalledWith(
+        "my-first-post",
+        "507f1f77bcf86cd799439012",
+      );
       expect(BlogsRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({ slug: "my-first-post" }),
       );
@@ -94,11 +102,21 @@ describe("BlogsService", () => {
     });
 
     it("should generate unique slug when slug already exists", async () => {
-      (BlogsRepository.findBySlug as jest.Mock).mockResolvedValueOnce(mockBlog).mockResolvedValueOnce(null);
-      (BlogsRepository.create as jest.Mock).mockResolvedValue({ ...mockBlog, slug: "my-first-post-1234" });
+      (BlogsRepository.findBySlug as jest.Mock)
+        .mockResolvedValueOnce(mockBlog)
+        .mockResolvedValueOnce(null);
+      (BlogsRepository.create as jest.Mock).mockResolvedValue({
+        ...mockBlog,
+        slug: "my-first-post-1234",
+      });
 
-      const data = { title: "My First Post", content: "Hello", agencyId: "507f1f77bcf86cd799439012", authorId: "507f1f77bcf86cd799439011" } as unknown as Partial<IBlog>;
-      const result = await BlogsService.create(data);
+      const data = {
+        title: "My First Post",
+        content: "Hello",
+        agencyId: "507f1f77bcf86cd799439012",
+        authorId: "507f1f77bcf86cd799439011",
+      } as unknown as Partial<IBlog>;
+      await BlogsService.create(data);
 
       expect(BlogsRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -111,7 +129,12 @@ describe("BlogsService", () => {
       (BlogsRepository.findBySlug as jest.Mock).mockResolvedValue(null);
       (BlogsRepository.create as jest.Mock).mockResolvedValue({ ...mockBlog, slug: "post" });
 
-      const data = { title: "", content: "Hello", agencyId: "507f1f77bcf86cd799439012", authorId: "507f1f77bcf86cd799439011" } as unknown as Partial<IBlog>;
+      const data = {
+        title: "",
+        content: "Hello",
+        agencyId: "507f1f77bcf86cd799439012",
+        authorId: "507f1f77bcf86cd799439011",
+      } as unknown as Partial<IBlog>;
       await BlogsService.create(data);
 
       expect(BlogsRepository.findBySlug).toHaveBeenCalledWith("post", "507f1f77bcf86cd799439012");
@@ -124,7 +147,13 @@ describe("BlogsService", () => {
       (BlogsRepository.findBySlug as jest.Mock).mockResolvedValue(null);
       (BlogsRepository.create as jest.Mock).mockImplementation((d) => d);
 
-      const data = { title: "Published Post", content: "Hello", agencyId: "507f1f77bcf86cd799439012", authorId: "507f1f77bcf86cd799439011", status: "published" as const } as unknown as Partial<IBlog>;
+      const data = {
+        title: "Published Post",
+        content: "Hello",
+        agencyId: "507f1f77bcf86cd799439012",
+        authorId: "507f1f77bcf86cd799439011",
+        status: "published" as const,
+      } as unknown as Partial<IBlog>;
       const result = await BlogsService.create(data);
 
       expect(result.publishedAt).toBeInstanceOf(Date);
@@ -134,7 +163,13 @@ describe("BlogsService", () => {
       (BlogsRepository.findBySlug as jest.Mock).mockResolvedValue(null);
       (BlogsRepository.create as jest.Mock).mockImplementation((d) => d);
 
-      const data = { title: "Draft Post", content: "Hello", agencyId: "507f1f77bcf86cd799439012", authorId: "507f1f77bcf86cd799439011", status: "draft" as const } as unknown as Partial<IBlog>;
+      const data = {
+        title: "Draft Post",
+        content: "Hello",
+        agencyId: "507f1f77bcf86cd799439012",
+        authorId: "507f1f77bcf86cd799439011",
+        status: "draft" as const,
+      } as unknown as Partial<IBlog>;
       const result = await BlogsService.create(data);
 
       expect(result.publishedAt).toBeUndefined();
@@ -143,7 +178,11 @@ describe("BlogsService", () => {
     it("should skip slug uniqueness check when agencyId is empty", async () => {
       (BlogsRepository.create as jest.Mock).mockImplementation((d) => d);
 
-      const data = { title: "No Agency", content: "Hello", authorId: "507f1f77bcf86cd799439011" } as unknown as Partial<IBlog>;
+      const data = {
+        title: "No Agency",
+        content: "Hello",
+        authorId: "507f1f77bcf86cd799439011",
+      } as unknown as Partial<IBlog>;
       const result = await BlogsService.create(data);
 
       expect(BlogsRepository.findBySlug).not.toHaveBeenCalled();
@@ -160,7 +199,9 @@ describe("BlogsService", () => {
       const result = await BlogsService.update("id1", "agency1", { title: "Updated Title" });
 
       expect(BlogsRepository.findById).toHaveBeenCalledWith("id1", "agency1");
-      expect(BlogsRepository.update).toHaveBeenCalledWith("id1", "agency1", { title: "Updated Title" });
+      expect(BlogsRepository.update).toHaveBeenCalledWith("id1", "agency1", {
+        title: "Updated Title",
+      });
       expect(result).toEqual(updated);
     });
 
@@ -178,7 +219,7 @@ describe("BlogsService", () => {
       (BlogsRepository.findById as jest.Mock).mockResolvedValue(draftBlog);
       (BlogsRepository.update as jest.Mock).mockImplementation((_id, _agencyId, data) => data);
 
-      const result = await BlogsService.update("id1", "agency1", { status: "published" });
+      await BlogsService.update("id1", "agency1", { status: "published" });
 
       expect(BlogsRepository.update).toHaveBeenCalledWith(
         "id1",

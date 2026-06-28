@@ -1,4 +1,8 @@
-import { matchLeadPropertiesSchema, generatePropertyDescriptionSchema, generateOutreachEmailSchema } from "../ai.validation";
+import {
+  matchLeadPropertiesSchema,
+  generatePropertyDescriptionSchema,
+  generateOutreachEmailSchema,
+} from "../ai.validation";
 
 describe("AI validation schemas", () => {
   describe("matchLeadPropertiesSchema", () => {

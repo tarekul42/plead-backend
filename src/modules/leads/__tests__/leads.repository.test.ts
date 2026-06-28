@@ -197,9 +197,9 @@ describe("LeadsRepository", () => {
         session: jest.fn().mockRejectedValue(new Error("db error")),
       });
 
-      await expect(
-        LeadsRepository.delete("id1", "ag1"),
-      ).rejects.toThrow("Failed to delete lead and associated data");
+      await expect(LeadsRepository.delete("id1", "ag1")).rejects.toThrow(
+        "Failed to delete lead and associated data",
+      );
       expect(mockSession.abortTransaction).toHaveBeenCalled();
     });
   });

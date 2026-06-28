@@ -1,13 +1,7 @@
 import multer from "multer";
-import path from "path";
 import { AppError } from "../utils/app-error";
 
-const ALLOWED_MIME_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/avif",
-];
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 

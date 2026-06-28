@@ -14,7 +14,12 @@ export const AuthController = {
     const { role } = req.body as { role: keyof typeof ACCOUNTS };
     const account = ACCOUNTS[role];
     if (!account) {
-      res.status(400).json({ success: false, error: { code: "INVALID_ROLE", message: `Unknown role: ${role}` } });
+      res
+        .status(400)
+        .json({
+          success: false,
+          error: { code: "INVALID_ROLE", message: `Unknown role: ${role}` },
+        });
       return;
     }
 
@@ -26,7 +31,10 @@ export const AuthController = {
     if (!user) {
       res.status(404).json({
         success: false,
-        error: { code: "DEMO_USER_NOT_FOUND", message: `Demo ${role} not found. Run \`bun run seed\` to create demo accounts.` },
+        error: {
+          code: "DEMO_USER_NOT_FOUND",
+          message: `Demo ${role} not found. Run \`bun run seed\` to create demo accounts.`,
+        },
       });
       return;
     }

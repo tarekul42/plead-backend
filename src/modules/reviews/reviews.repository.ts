@@ -36,5 +36,4 @@ export const ReviewsRepository = {
     const result = await ReviewModel.deleteOne({ _id: id, agencyId });
     return result.deletedCount > 0;
   },
-
 };

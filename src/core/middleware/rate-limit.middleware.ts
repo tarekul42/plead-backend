@@ -21,7 +21,10 @@ const createRateLimiter = (
 export const globalRateLimit = createRateLimiter(env.RATE_LIMIT_WINDOW_MS, env.RATE_LIMIT_MAX);
 
 export const authRateLimit = createRateLimiter(15 * 60 * 1000, 10, {
-  message: { success: false, error: { code: "AUTH_RATE_LIMITED", message: "Too many auth attempts" } },
+  message: {
+    success: false,
+    error: { code: "AUTH_RATE_LIMITED", message: "Too many auth attempts" },
+  },
 });
 
 export const apiRateLimit = createRateLimiter(60 * 1000, 60, {

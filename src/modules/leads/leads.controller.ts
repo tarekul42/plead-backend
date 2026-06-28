@@ -7,7 +7,13 @@ import { LeadsService } from "./leads.service";
 
 export const LeadsController = {
   list: asyncHandler(async (req: Request, res: Response) => {
-    const query = { ...req.query } as unknown as { status?: string; assignedAgentId?: string; q?: string; page: number; limit: number };
+    const query = { ...req.query } as unknown as {
+      status?: string;
+      assignedAgentId?: string;
+      q?: string;
+      page: number;
+      limit: number;
+    };
     if (req.user!.role === "agent") {
       query.assignedAgentId = req.user!.id;
     }
@@ -19,7 +25,8 @@ export const LeadsController = {
   getById: asyncHandler(async (req: Request, res: Response) => {
     const lead = await LeadsService.getById(String(req.params.id), req.user!.agencyId);
     if (!lead) throw NotFoundError("Lead");
-    if (req.user!.role === "agent" && lead.assignedAgentId?.toString() !== req.user!.id) throw NotFoundError("Lead");
+    if (req.user!.role === "agent" && lead.assignedAgentId?.toString() !== req.user!.id)
+      throw NotFoundError("Lead");
     res.json(success(lead));
   }),
 
@@ -31,7 +38,8 @@ export const LeadsController = {
   update: asyncHandler(async (req: Request, res: Response) => {
     const lead = await LeadsService.getById(String(req.params.id), req.user!.agencyId);
     if (!lead) throw NotFoundError("Lead");
-    if (req.user!.role === "agent" && lead.assignedAgentId?.toString() !== req.user!.id) throw NotFoundError("Lead");
+    if (req.user!.role === "agent" && lead.assignedAgentId?.toString() !== req.user!.id)
+      throw NotFoundError("Lead");
     const updated = await LeadsService.update(String(req.params.id), req.user!.agencyId, req.body);
     if (!updated) throw NotFoundError("Lead");
     res.json(success(updated));
@@ -40,7 +48,8 @@ export const LeadsController = {
   delete: asyncHandler(async (req: Request, res: Response) => {
     const lead = await LeadsService.getById(String(req.params.id), req.user!.agencyId);
     if (!lead) throw NotFoundError("Lead");
-    if (req.user!.role === "agent" && lead.assignedAgentId?.toString() !== req.user!.id) throw NotFoundError("Lead");
+    if (req.user!.role === "agent" && lead.assignedAgentId?.toString() !== req.user!.id)
+      throw NotFoundError("Lead");
     const deleted = await LeadsService.delete(String(req.params.id), req.user!.agencyId);
     if (!deleted) throw NotFoundError("Lead");
     res.json(success({ deleted: true }));

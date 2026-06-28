@@ -19,7 +19,11 @@ export const WebhooksService = {
 
     const agencyId = data.public_metadata?.agencyId;
     if (!agencyId || !mongoose.Types.ObjectId.isValid(agencyId)) {
-      throw new AppError(400, "WEBHOOK_VALIDATION", "Missing or invalid agencyId in user public_metadata");
+      throw new AppError(
+        400,
+        "WEBHOOK_VALIDATION",
+        "Missing or invalid agencyId in user public_metadata",
+      );
     }
 
     const role = data.public_metadata?.role;
@@ -60,23 +64,23 @@ export const WebhooksService = {
       email: primaryEmail,
       name: [data.first_name, data.last_name].filter(Boolean).join(" ") || "Unknown",
       avatarUrl: data.image_url,
-      role: data.public_metadata?.role && ["agent", "manager", "admin"].includes(data.public_metadata.role)
-        ? data.public_metadata.role
-        : undefined,
-      agencyId: data.public_metadata?.agencyId && mongoose.Types.ObjectId.isValid(data.public_metadata.agencyId)
-        ? new mongoose.Types.ObjectId(data.public_metadata.agencyId)
-        : undefined,
+      role:
+        data.public_metadata?.role &&
+        ["agent", "manager", "admin"].includes(data.public_metadata.role)
+          ? data.public_metadata.role
+          : undefined,
+      agencyId:
+        data.public_metadata?.agencyId &&
+        mongoose.Types.ObjectId.isValid(data.public_metadata.agencyId)
+          ? new mongoose.Types.ObjectId(data.public_metadata.agencyId)
+          : undefined,
     };
 
     for (const k of Object.keys(update)) {
       if (update[k] === undefined) delete update[k];
     }
 
-    return UserModel.findOneAndUpdate(
-      { clerkId: data.id },
-      update,
-      { new: true },
-    );
+    return UserModel.findOneAndUpdate({ clerkId: data.id }, update, { new: true });
   },
 
   async handleUserDeleted(data: { id: string }) {

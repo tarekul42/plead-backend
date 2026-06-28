@@ -24,7 +24,11 @@ export const AgenciesController = {
   }),
 
   update: asyncHandler(async (req: Request, res: Response) => {
-    const agency = await AgenciesService.update(String(req.params.id), req.user!.agencyId, req.body);
+    const agency = await AgenciesService.update(
+      String(req.params.id),
+      req.user!.agencyId,
+      req.body,
+    );
     if (!agency) throw NotFoundError("Agency");
     res.json(success(agency));
   }),

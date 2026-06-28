@@ -36,7 +36,9 @@ describe("GeminiProvider", () => {
       text: jest.fn().mockResolvedValue("Bad Request"),
     });
 
-    await expect(provider.generateJSON({ system: "sys", user: "usr", schema: {} })).rejects.toThrow("Gemini API error: 400");
+    await expect(provider.generateJSON({ system: "sys", user: "usr", schema: {} })).rejects.toThrow(
+      "Gemini API error: 400",
+    );
   });
 
   it("throws on invalid JSON response", async () => {
@@ -47,7 +49,9 @@ describe("GeminiProvider", () => {
       }),
     });
 
-    await expect(provider.generateJSON({ system: "sys", user: "usr", schema: {} })).rejects.toThrow("Invalid JSON response from Gemini");
+    await expect(provider.generateJSON({ system: "sys", user: "usr", schema: {} })).rejects.toThrow(
+      "Invalid JSON response from Gemini",
+    );
   });
 
   it("isHealthy returns true on success", async () => {
@@ -102,7 +106,9 @@ describe("GroqProvider", () => {
       text: jest.fn().mockResolvedValue("Unauthorized"),
     });
 
-    await expect(provider.generateJSON({ system: "sys", user: "usr", schema: {} })).rejects.toThrow("Groq API error: 401");
+    await expect(provider.generateJSON({ system: "sys", user: "usr", schema: {} })).rejects.toThrow(
+      "Groq API error: 401",
+    );
   });
 
   it("throws on invalid JSON response", async () => {
@@ -113,7 +119,9 @@ describe("GroqProvider", () => {
       }),
     });
 
-    await expect(provider.generateJSON({ system: "sys", user: "usr", schema: {} })).rejects.toThrow("Invalid JSON response from Groq");
+    await expect(provider.generateJSON({ system: "sys", user: "usr", schema: {} })).rejects.toThrow(
+      "Invalid JSON response from Groq",
+    );
   });
 
   it("isHealthy returns true on success", async () => {

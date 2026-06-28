@@ -3,7 +3,6 @@ import request from "supertest";
 import helmet from "helmet";
 import cors from "cors";
 import { errorHandler } from "../../core/middleware/error-handler.middleware";
-import { notFound } from "../../core/middleware/not-found.middleware";
 
 jest.mock("../../core/config/env", () => ({
   env: {
@@ -67,16 +66,12 @@ describe("Security: CORS", () => {
   });
 
   it("allows requests from trusted origin", async () => {
-    const res = await request(app)
-      .get("/test")
-      .set("Origin", "https://trusted-frontend.com");
+    const res = await request(app).get("/test").set("Origin", "https://trusted-frontend.com");
     expect(res.headers["access-control-allow-origin"]).toBe("https://trusted-frontend.com");
   });
 
   it("rejects requests from untrusted origin", async () => {
-    const res = await request(app)
-      .get("/test")
-      .set("Origin", "https://evil.com");
+    const res = await request(app).get("/test").set("Origin", "https://evil.com");
     expect(res.headers["access-control-allow-origin"]).toBeFalsy();
   });
 });
@@ -95,9 +90,7 @@ describe("Security: Input validation", () => {
 
   it("rejects request body exceeding size limit", async () => {
     const largePayload = { data: "x".repeat(12 * 1024) };
-    const res = await request(app)
-      .post("/test")
-      .send(largePayload);
+    const res = await request(app).post("/test").send(largePayload);
     expect([413, 500]).toContain(res.status);
   });
 
@@ -221,16 +214,12 @@ describe("Security: Zod schema fuzzing", () => {
   });
 
   it("rejects missing required field", async () => {
-    const res = await request(app)
-      .post("/test")
-      .send({ email: "bob@test.com" });
+    const res = await request(app).post("/test").send({ email: "bob@test.com" });
     expect(res.status).toBe(422);
   });
 
   it("rejects invalid email format", async () => {
-    const res = await request(app)
-      .post("/test")
-      .send({ name: "Test", email: "not-an-email" });
+    const res = await request(app).post("/test").send({ name: "Test", email: "not-an-email" });
     expect(res.status).toBe(422);
   });
 });
@@ -248,9 +237,7 @@ describe("Security: XSS — backend stores HTML safely (output encoding is front
   });
 
   it("accepts text with HTML tags (backend does not strip — React escapes on output)", async () => {
-    const res = await request(app)
-      .post("/test")
-      .send({ name: "<script>alert('xss')</script>" });
+    const res = await request(app).post("/test").send({ name: "<script>alert('xss')</script>" });
     expect(res.status).toBe(200);
     expect(res.body.received.name).toBe("<script>alert('xss')</script>");
   });
@@ -265,7 +252,8 @@ describe("Security: Auth token tampering", () => {
     app.get("/protected", (req, res) => {
       const auth = req.headers.authorization;
       if (!auth) return res.status(401).json({ error: "Missing authorization" });
-      if (!auth.startsWith("Bearer ")) return res.status(401).json({ error: "Invalid token format" });
+      if (!auth.startsWith("Bearer "))
+        return res.status(401).json({ error: "Invalid token format" });
       const token = auth.slice(7);
       if (token.length < 10) return res.status(401).json({ error: "Token too short" });
       if (token === "expired-token") return res.status(401).json({ error: "Token expired" });
@@ -280,30 +268,22 @@ describe("Security: Auth token tampering", () => {
   });
 
   it("rejects malformed auth header", async () => {
-    const res = await request(app)
-      .get("/protected")
-      .set("Authorization", "Basic dGVzdDpwYXNz");
+    const res = await request(app).get("/protected").set("Authorization", "Basic dGVzdDpwYXNz");
     expect(res.status).toBe(401);
   });
 
   it("rejects empty token", async () => {
-    const res = await request(app)
-      .get("/protected")
-      .set("Authorization", "Bearer ");
+    const res = await request(app).get("/protected").set("Authorization", "Bearer ");
     expect(res.status).toBe(401);
   });
 
   it("rejects very short token", async () => {
-    const res = await request(app)
-      .get("/protected")
-      .set("Authorization", "Bearer abc");
+    const res = await request(app).get("/protected").set("Authorization", "Bearer abc");
     expect(res.status).toBe(401);
   });
 
   it("rejects expired token", async () => {
-    const res = await request(app)
-      .get("/protected")
-      .set("Authorization", "Bearer expired-token");
+    const res = await request(app).get("/protected").set("Authorization", "Bearer expired-token");
     expect(res.status).toBe(401);
   });
 });
@@ -316,13 +296,15 @@ describe("Security: RBAC boundary enforcement", () => {
     app.use(express.json());
 
     const mockRequireAuth = (req: any, _res: any, next: any) => {
-      req.user = req.headers["x-test-role"] === "admin"
-        ? { id: "admin-1", role: "admin", agencyId: "agency-1" }
-        : { id: "agent-1", role: "agent", agencyId: "agency-1" };
+      req.user =
+        req.headers["x-test-role"] === "admin"
+          ? { id: "admin-1", role: "admin", agencyId: "agency-1" }
+          : { id: "agent-1", role: "agent", agencyId: "agency-1" };
       next();
     };
 
-    const StrictRole = (...roles: string[]) =>
+    const StrictRole =
+      (...roles: string[]) =>
       (req: any, _res: any, next: any) => {
         if (!roles.includes(req.user?.role)) {
           return next({ statusCode: 403, code: "FORBIDDEN", message: "Insufficient role" });
@@ -347,16 +329,12 @@ describe("Security: RBAC boundary enforcement", () => {
   });
 
   it("allows admin to access admin endpoints", async () => {
-    const res = await request(app)
-      .get("/admin/users")
-      .set("x-test-role", "admin");
+    const res = await request(app).get("/admin/users").set("x-test-role", "admin");
     expect(res.status).toBe(200);
   });
 
   it("blocks agent from accessing admin endpoints", async () => {
-    const res = await request(app)
-      .get("/admin/users")
-      .set("x-test-role", "agent");
+    const res = await request(app).get("/admin/users").set("x-test-role", "agent");
     expect(res.status).toBe(403);
   });
 });

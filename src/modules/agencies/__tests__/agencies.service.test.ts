@@ -39,14 +39,12 @@ describe("AgenciesService", () => {
   it("create generates slug", async () => {
     repo.findBySlug.mockResolvedValue(null);
     repo.create.mockResolvedValue({ name: "My Agency", slug: "my-agency" });
-    const result = await AgenciesService.create({ name: "My Agency" } as any);
+    await AgenciesService.create({ name: "My Agency" } as any);
     expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ slug: "my-agency" }));
   });
 
   it("create handles slug collision", async () => {
-    repo.findBySlug
-      .mockResolvedValueOnce({ slug: "my-agency" })
-      .mockResolvedValueOnce(null);
+    repo.findBySlug.mockResolvedValueOnce({ slug: "my-agency" }).mockResolvedValueOnce(null);
     repo.create.mockResolvedValue({ name: "My Agency", slug: expect.any(String) });
 
     const result = await AgenciesService.create({ name: "My Agency" } as any);
@@ -56,7 +54,10 @@ describe("AgenciesService", () => {
 
   it("update delegates", async () => {
     repo.update.mockResolvedValue({ _id: "abc", name: "Updated" });
-    expect(await AgenciesService.update("abc", "abc", { name: "Updated" })).toEqual({ _id: "abc", name: "Updated" });
+    expect(await AgenciesService.update("abc", "abc", { name: "Updated" })).toEqual({
+      _id: "abc",
+      name: "Updated",
+    });
   });
 
   it("update rejects cross-agency access", async () => {

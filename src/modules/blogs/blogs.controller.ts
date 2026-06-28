@@ -30,7 +30,11 @@ export const BlogsController = {
   }),
 
   create: asyncHandler(async (req: Request, res: Response) => {
-    const blog = await BlogsService.create({ ...req.body, agencyId: req.user!.agencyId, authorId: req.user!.id });
+    const blog = await BlogsService.create({
+      ...req.body,
+      agencyId: req.user!.agencyId,
+      authorId: req.user!.id,
+    });
     res.status(201).json(success(blog));
   }),
 

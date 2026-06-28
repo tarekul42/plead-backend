@@ -141,11 +141,9 @@ describe("PropertiesController.update", () => {
     await PropertiesController.update(req as never, res as never, jest.fn());
 
     expect(res.body).toEqual({ success: true, data: property });
-    expect(MockedService.update).toHaveBeenCalledWith(
-      "64b7f0c2e1a2b3c4d5e6f702",
-      AGENCY_ID,
-      { title: "Updated" },
-    );
+    expect(MockedService.update).toHaveBeenCalledWith("64b7f0c2e1a2b3c4d5e6f702", AGENCY_ID, {
+      title: "Updated",
+    });
   });
 
   it("propagates NotFoundError when the property is missing", async () => {

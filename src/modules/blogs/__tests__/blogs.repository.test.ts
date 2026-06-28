@@ -25,7 +25,9 @@ jest.mock("../blogs.model", () => ({
 jest.mock("../../users/users.model", () => ({
   UserModel: {
     find: jest.fn(() => ({ select: jest.fn(() => ({ lean: jest.fn().mockResolvedValue([]) })) })),
-    findById: jest.fn(() => ({ select: jest.fn(() => ({ lean: jest.fn().mockResolvedValue(null) })) })),
+    findById: jest.fn(() => ({
+      select: jest.fn(() => ({ lean: jest.fn().mockResolvedValue(null) })),
+    })),
   },
 }));
 
@@ -119,7 +121,9 @@ describe("BlogsRepository", () => {
   describe("update", () => {
     it("calls findOneAndUpdate with { new: true }", async () => {
       const updated = { _id: "abc", agencyId: "agency_1", title: "Updated" };
-      (jest.requireMock("../blogs.model").BlogModel.findOneAndUpdate as jest.Mock).mockResolvedValue(updated);
+      (
+        jest.requireMock("../blogs.model").BlogModel.findOneAndUpdate as jest.Mock
+      ).mockResolvedValue(updated);
 
       const result = await BlogsRepository.update("abc", "agency_1", { title: "Updated" } as any);
 
@@ -127,9 +131,13 @@ describe("BlogsRepository", () => {
     });
 
     it("returns null", async () => {
-      (jest.requireMock("../blogs.model").BlogModel.findOneAndUpdate as jest.Mock).mockResolvedValue(null);
+      (
+        jest.requireMock("../blogs.model").BlogModel.findOneAndUpdate as jest.Mock
+      ).mockResolvedValue(null);
 
-      const result = await BlogsRepository.update("nonexistent", "agency_1", { title: "Updated" } as any);
+      const result = await BlogsRepository.update("nonexistent", "agency_1", {
+        title: "Updated",
+      } as any);
 
       expect(result).toBeNull();
     });
@@ -137,7 +145,9 @@ describe("BlogsRepository", () => {
 
   describe("delete", () => {
     it("returns true when deleted", async () => {
-      (jest.requireMock("../blogs.model").BlogModel.deleteOne as jest.Mock).mockResolvedValue({ deletedCount: 1 });
+      (jest.requireMock("../blogs.model").BlogModel.deleteOne as jest.Mock).mockResolvedValue({
+        deletedCount: 1,
+      });
 
       const result = await BlogsRepository.delete("abc", "agency_1");
 
@@ -145,7 +155,9 @@ describe("BlogsRepository", () => {
     });
 
     it("returns false when nothing deleted", async () => {
-      (jest.requireMock("../blogs.model").BlogModel.deleteOne as jest.Mock).mockResolvedValue({ deletedCount: 0 });
+      (jest.requireMock("../blogs.model").BlogModel.deleteOne as jest.Mock).mockResolvedValue({
+        deletedCount: 0,
+      });
 
       const result = await BlogsRepository.delete("nonexistent", "agency_1");
 

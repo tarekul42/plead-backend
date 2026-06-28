@@ -24,7 +24,9 @@ describe("Integration: error handling middleware", () => {
   });
 
   it("handles AppError thrown in routes", async () => {
-    app.get("/error", () => { throw new AppError(422, "VALIDATION", "Invalid input"); });
+    app.get("/error", () => {
+      throw new AppError(422, "VALIDATION", "Invalid input");
+    });
     app.use(errorHandler);
 
     const res = await request(app).get("/error");

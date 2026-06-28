@@ -24,10 +24,14 @@ import {
   outreachEmailResponseSchema,
 } from "./prompts/outreach-email.prompts";
 import { logger } from "../../core/utils/logger";
-import { getErrorMessage } from "../../core/utils/safe-error";
 
 export const AiService = {
-  async matchLeadProperties(leadId: string, propertyIds: string[] | undefined, userId: string, agencyId: string) {
+  async matchLeadProperties(
+    leadId: string,
+    propertyIds: string[] | undefined,
+    userId: string,
+    agencyId: string,
+  ) {
     const lead = await LeadModel.findOne({ _id: leadId, agencyId }).lean();
     if (!lead) throw NotFoundError("Lead");
 
@@ -97,7 +101,10 @@ export const AiService = {
             score -= 10;
             reasons.push("Above budget");
           }
-          if (lead.preferredLocation && p.location.toLowerCase().includes(lead.preferredLocation.toLowerCase())) {
+          if (
+            lead.preferredLocation &&
+            p.location.toLowerCase().includes(lead.preferredLocation.toLowerCase())
+          ) {
             score += 20;
             reasons.push("Matches preferred location");
           }
@@ -111,7 +118,13 @@ export const AiService = {
             score += 10;
             reasons.push("Matches property type");
           }
-          return { propertyId: p._id.toString(), propertyTitle: p.title, propertyLocation: p.location, score: Math.min(100, Math.max(0, score)), reasons: reasons.length > 0 ? reasons : ["Available property"] };
+          return {
+            propertyId: p._id.toString(),
+            propertyTitle: p.title,
+            propertyLocation: p.location,
+            score: Math.min(100, Math.max(0, score)),
+            reasons: reasons.length > 0 ? reasons : ["Available property"],
+          };
         })
         .filter((m) => m.score >= 40)
         .sort((a, b) => b.score - a.score)
@@ -138,12 +151,19 @@ export const AiService = {
     return { ...result, provider, tokensUsed, cached: false };
   },
 
-  async generatePropertyDescription(propertyId: string, tone: "luxury" | "standard" | "brief", userId: string, agencyId: string) {
+  async generatePropertyDescription(
+    propertyId: string,
+    tone: "luxury" | "standard" | "brief",
+    userId: string,
+    agencyId: string,
+  ) {
     const property = await PropertyModel.findOne({ _id: propertyId, agencyId }).lean();
     if (!property) throw NotFoundError("Property");
 
     const inputHash = hashInput({ propertyId, tone });
-    const cached = await cacheGet<{ title: string; description: string; highlights: string[] }>(inputHash);
+    const cached = await cacheGet<{ title: string; description: string; highlights: string[] }>(
+      inputHash,
+    );
     if (cached) return { ...cached, cached: true };
 
     const start = Date.now();
@@ -179,7 +199,11 @@ export const AiService = {
 
     if (aiResult) {
       const { data: aiData, tokensUsed: aiTokens, provider: aiProvider } = aiResult;
-      result = (aiData as { title: string; description: string; highlights: string[] }) || { title: "", description: "", highlights: [] };
+      result = (aiData as { title: string; description: string; highlights: string[] }) || {
+        title: "",
+        description: "",
+        highlights: [],
+      };
       tokensUsed = aiTokens;
       provider = aiProvider;
     } else {
@@ -211,7 +235,6 @@ export const AiService = {
     });
 
     await AiRepository.persistCopy({
-
       agencyId: new mongoose.Types.ObjectId(agencyId),
       userId: new mongoose.Types.ObjectId(userId),
       type: "property-description",
@@ -225,7 +248,13 @@ export const AiService = {
     return { ...result, provider, tokensUsed, cached: false };
   },
 
-  async generateOutreachEmail(leadId: string, propertyId: string, tone: "professional" | "friendly" | "urgent", userId: string, agencyId: string) {
+  async generateOutreachEmail(
+    leadId: string,
+    propertyId: string,
+    tone: "professional" | "friendly" | "urgent",
+    userId: string,
+    agencyId: string,
+  ) {
     const [lead, property] = await Promise.all([
       LeadModel.findOne({ _id: leadId, agencyId }).lean(),
       PropertyModel.findOne({ _id: propertyId, agencyId }).lean(),

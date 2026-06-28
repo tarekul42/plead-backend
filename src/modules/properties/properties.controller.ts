@@ -13,7 +13,10 @@ function getAgencyId(req: Request): string {
 export const PropertiesController = {
   list: asyncHandler(async (req: Request, res: Response) => {
     const { page, limit } = Pagination.from(req.query, 12);
-    const { data, total } = await PropertiesService.list(req.query as unknown as ListQuery, getAgencyId(req));
+    const { data, total } = await PropertiesService.list(
+      req.query as unknown as ListQuery,
+      getAgencyId(req),
+    );
     res.json(success(data, Pagination.meta(page, limit, total)));
   }),
 
@@ -35,7 +38,11 @@ export const PropertiesController = {
   }),
 
   update: asyncHandler(async (req: Request, res: Response) => {
-    const property = await PropertiesService.update(String(req.params.id), req.user!.agencyId, req.body);
+    const property = await PropertiesService.update(
+      String(req.params.id),
+      req.user!.agencyId,
+      req.body,
+    );
     if (!property) throw NotFoundError("Property");
     res.json(success(property));
   }),

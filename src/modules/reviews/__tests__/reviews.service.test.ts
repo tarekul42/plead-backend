@@ -71,7 +71,12 @@ describe("ReviewsService", () => {
     it("should create and return a review", async () => {
       (ReviewsRepository.create as jest.Mock).mockResolvedValue(mockReview);
 
-      const data = { agencyId: "agency1", propertyId: "prop1", userId: "user1", rating: 5 } as unknown as Partial<IReview>;
+      const data = {
+        agencyId: "agency1",
+        propertyId: "prop1",
+        userId: "user1",
+        rating: 5,
+      } as unknown as Partial<IReview>;
       const result = await ReviewsService.create(data);
 
       expect(ReviewsRepository.create).toHaveBeenCalledWith(data);
@@ -85,17 +90,25 @@ describe("ReviewsService", () => {
       (ReviewsRepository.findById as jest.Mock).mockResolvedValue(mockReview);
       (ReviewsRepository.update as jest.Mock).mockResolvedValue(updated);
 
-      const result = await ReviewsService.update("id1", "agency1", mockReview.userId, "agent", { rating: 4, comment: "Updated comment" });
+      const result = await ReviewsService.update("id1", "agency1", mockReview.userId, "agent", {
+        rating: 4,
+        comment: "Updated comment",
+      });
 
       expect(ReviewsRepository.findById).toHaveBeenCalledWith("id1", "agency1");
-      expect(ReviewsRepository.update).toHaveBeenCalledWith("id1", "agency1", { rating: 4, comment: "Updated comment" });
+      expect(ReviewsRepository.update).toHaveBeenCalledWith("id1", "agency1", {
+        rating: 4,
+        comment: "Updated comment",
+      });
       expect(result).toEqual(updated);
     });
 
     it("should return null when review not found", async () => {
       (ReviewsRepository.findById as jest.Mock).mockResolvedValue(null);
 
-      const result = await ReviewsService.update("nonexistent", "agency1", "user1", "manager", { rating: 3 });
+      const result = await ReviewsService.update("nonexistent", "agency1", "user1", "manager", {
+        rating: 3,
+      });
 
       expect(result).toBeNull();
       expect(ReviewsRepository.update).not.toHaveBeenCalled();

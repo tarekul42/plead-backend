@@ -19,8 +19,16 @@ import { InteractionsController } from "../interactions.controller";
 
 function mockReq(overrides: Partial<Request> = {}): Request {
   return {
-    user: { id: "user_1", agencyId: "agency_1", role: "admin", clerkId: "clerk_1", email: "a@b.com" },
-    params: {}, query: {}, body: {},
+    user: {
+      id: "user_1",
+      agencyId: "agency_1",
+      role: "admin",
+      clerkId: "clerk_1",
+      email: "a@b.com",
+    },
+    params: {},
+    query: {},
+    body: {},
     ...overrides,
   } as Request;
 }
@@ -39,23 +47,43 @@ describe("InteractionsController", () => {
   });
 
   it("list uses listByAgency for non-agent", async () => {
-    const req = mockReq(); const res = mockRes(); const next = jest.fn();
+    const req = mockReq();
+    const res = mockRes();
+    const next = jest.fn();
     svc.listByAgency.mockResolvedValue({ data: [], total: 0 });
     await InteractionsController.list(req, res, next);
-    expect(svc.listByAgency).toHaveBeenCalledWith("agency_1", 1, 50, undefined, undefined, undefined, undefined);
+    expect(svc.listByAgency).toHaveBeenCalledWith(
+      "agency_1",
+      1,
+      50,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    );
   });
 
   it("list uses listByUser for agent role", async () => {
     const req = mockReq({ user: { ...mockReq().user!, role: "agent" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.listByUser.mockResolvedValue({ data: [], total: 0 });
     await InteractionsController.list(req, res, next);
-    expect(svc.listByUser).toHaveBeenCalledWith("user_1", "agency_1", 1, 50, undefined, undefined, undefined);
+    expect(svc.listByUser).toHaveBeenCalledWith(
+      "user_1",
+      "agency_1",
+      1,
+      50,
+      undefined,
+      undefined,
+      undefined,
+    );
   });
 
   it("listByLead returns paginated interactions", async () => {
     const req = mockReq({ params: { leadId: "lead_1" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.listByLead.mockResolvedValue({ data: [{ id: "i1" }], total: 1 });
     await InteractionsController.listByLead(req, res, next);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
@@ -63,7 +91,8 @@ describe("InteractionsController", () => {
 
   it("create returns 201", async () => {
     const req = mockReq({ params: { leadId: "lead_1" }, body: { type: "call" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.create.mockResolvedValue({ id: "new" });
     await InteractionsController.create(req, res, next);
     expect(res.status).toHaveBeenCalledWith(201);
@@ -71,7 +100,8 @@ describe("InteractionsController", () => {
 
   it("create spreads leadId from params and userId/agencyId from req.user", async () => {
     const req = mockReq({ params: { leadId: "lead_1" }, body: { type: "call" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.create.mockResolvedValue({ id: "new" });
 
     await InteractionsController.create(req, res, next);
@@ -85,17 +115,21 @@ describe("InteractionsController", () => {
 
   it("update works successfully", async () => {
     const req = mockReq({ params: { id: "abc" }, body: { type: "email" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.update.mockResolvedValue({ _id: "abc", type: "email" });
 
     await InteractionsController.update(req, res, next);
-    expect(svc.update).toHaveBeenCalledWith("abc", "agency_1", "user_1", "admin", { type: "email" });
+    expect(svc.update).toHaveBeenCalledWith("abc", "agency_1", "user_1", "admin", {
+      type: "email",
+    });
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
   });
 
   it("delete returns success", async () => {
     const req = mockReq({ params: { id: "abc" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.delete.mockResolvedValue(true);
 
     await InteractionsController.delete(req, res, next);
@@ -105,7 +139,8 @@ describe("InteractionsController", () => {
 
   it("delete throws NotFoundError when missing", async () => {
     const req = mockReq({ params: { id: "abc" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.delete.mockResolvedValue(false);
     await InteractionsController.delete(req, res, next);
     expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 404 }));

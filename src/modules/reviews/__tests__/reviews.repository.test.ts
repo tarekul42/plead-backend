@@ -99,7 +99,9 @@ describe("ReviewsRepository", () => {
   describe("create", () => {
     it("calls ReviewModel.create", async () => {
       const data = { rating: 5, agencyId: "agency_1" };
-      (jest.requireMock("../reviews.model").ReviewModel.create as jest.Mock).mockResolvedValue(data);
+      (jest.requireMock("../reviews.model").ReviewModel.create as jest.Mock).mockResolvedValue(
+        data,
+      );
 
       const result = await ReviewsRepository.create(data as any);
 
@@ -110,7 +112,9 @@ describe("ReviewsRepository", () => {
   describe("update", () => {
     it("calls findOneAndUpdate with { new: true }", async () => {
       const updated = { _id: "abc", agencyId: "agency_1", rating: 4 };
-      (jest.requireMock("../reviews.model").ReviewModel.findOneAndUpdate as jest.Mock).mockResolvedValue(updated);
+      (
+        jest.requireMock("../reviews.model").ReviewModel.findOneAndUpdate as jest.Mock
+      ).mockResolvedValue(updated);
 
       const result = await ReviewsRepository.update("abc", "agency_1", { rating: 4 } as any);
 
@@ -118,9 +122,13 @@ describe("ReviewsRepository", () => {
     });
 
     it("returns null", async () => {
-      (jest.requireMock("../reviews.model").ReviewModel.findOneAndUpdate as jest.Mock).mockResolvedValue(null);
+      (
+        jest.requireMock("../reviews.model").ReviewModel.findOneAndUpdate as jest.Mock
+      ).mockResolvedValue(null);
 
-      const result = await ReviewsRepository.update("nonexistent", "agency_1", { rating: 4 } as any);
+      const result = await ReviewsRepository.update("nonexistent", "agency_1", {
+        rating: 4,
+      } as any);
 
       expect(result).toBeNull();
     });
@@ -128,7 +136,9 @@ describe("ReviewsRepository", () => {
 
   describe("delete", () => {
     it("returns true when deleted", async () => {
-      (jest.requireMock("../reviews.model").ReviewModel.deleteOne as jest.Mock).mockResolvedValue({ deletedCount: 1 });
+      (jest.requireMock("../reviews.model").ReviewModel.deleteOne as jest.Mock).mockResolvedValue({
+        deletedCount: 1,
+      });
 
       const result = await ReviewsRepository.delete("abc", "agency_1");
 
@@ -136,7 +146,9 @@ describe("ReviewsRepository", () => {
     });
 
     it("returns false when nothing deleted", async () => {
-      (jest.requireMock("../reviews.model").ReviewModel.deleteOne as jest.Mock).mockResolvedValue({ deletedCount: 0 });
+      (jest.requireMock("../reviews.model").ReviewModel.deleteOne as jest.Mock).mockResolvedValue({
+        deletedCount: 0,
+      });
 
       const result = await ReviewsRepository.delete("nonexistent", "agency_1");
 

@@ -18,8 +18,16 @@ import { BlogsController } from "../blogs.controller";
 
 function mockReq(overrides: Partial<Request> = {}): Request {
   return {
-    user: { id: "user_1", agencyId: "agency_1", role: "admin", clerkId: "clerk_1", email: "a@b.com" },
-    params: {}, query: {}, body: {},
+    user: {
+      id: "user_1",
+      agencyId: "agency_1",
+      role: "admin",
+      clerkId: "clerk_1",
+      email: "a@b.com",
+    },
+    params: {},
+    query: {},
+    body: {},
     ...overrides,
   } as Request;
 }
@@ -38,7 +46,9 @@ describe("BlogsController", () => {
   });
 
   it("list returns paginated blogs", async () => {
-    const req = mockReq(); const res = mockRes(); const next = jest.fn();
+    const req = mockReq();
+    const res = mockRes();
+    const next = jest.fn();
     svc.list.mockResolvedValue({ data: [{ id: "b1" }], total: 1 });
     await BlogsController.list(req, res, next);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
@@ -46,7 +56,8 @@ describe("BlogsController", () => {
 
   it("getBySlug returns blog", async () => {
     const req = mockReq({ params: { slug: "my-post" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.getBySlug.mockResolvedValue({ slug: "my-post" });
     await BlogsController.getBySlug(req, res, next);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
@@ -54,7 +65,8 @@ describe("BlogsController", () => {
 
   it("getBySlug throws NotFoundError when missing", async () => {
     const req = mockReq({ params: { slug: "my-post" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.getBySlug.mockResolvedValue(null);
     await BlogsController.getBySlug(req, res, next);
     expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 404 }));
@@ -62,7 +74,8 @@ describe("BlogsController", () => {
 
   it("getById throws NotFoundError when missing", async () => {
     const req = mockReq({ params: { id: "abc" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.getById.mockResolvedValue(null);
     await BlogsController.getById(req, res, next);
     expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 404 }));
@@ -70,7 +83,8 @@ describe("BlogsController", () => {
 
   it("create returns 201", async () => {
     const req = mockReq({ body: { title: "Post" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.create.mockResolvedValue({ id: "new" });
     await BlogsController.create(req, res, next);
     expect(res.status).toHaveBeenCalledWith(201);
@@ -78,7 +92,8 @@ describe("BlogsController", () => {
 
   it("create spreads authorId from req.user", async () => {
     const req = mockReq({ body: { title: "Post", content: "..." } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.create.mockResolvedValue({ id: "new" });
 
     await BlogsController.create(req, res, next);
@@ -92,7 +107,8 @@ describe("BlogsController", () => {
 
   it("update works successfully", async () => {
     const req = mockReq({ params: { id: "abc" }, body: { title: "Updated" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.update.mockResolvedValue({ _id: "abc", title: "Updated" });
 
     await BlogsController.update(req, res, next);
@@ -102,7 +118,8 @@ describe("BlogsController", () => {
 
   it("delete throws NotFoundError when missing", async () => {
     const req = mockReq({ params: { id: "abc" } });
-    const res = mockRes(); const next = jest.fn();
+    const res = mockRes();
+    const next = jest.fn();
     svc.delete.mockResolvedValue(false);
     await BlogsController.delete(req, res, next);
     expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 404 }));

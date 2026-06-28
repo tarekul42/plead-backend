@@ -42,8 +42,8 @@ export { invalidateUser, clearUserCache };
 
 async function getOrCreateDefaultAgency(): Promise<string> {
   const { AgencyModel } = await import("../../modules/agencies/agencies.model");
-  const agency = await AgencyModel.findOne({}).lean();
-  if (agency) return (agency as any)._id.toString();
+  const agency = await AgencyModel.findOne({}).lean<{ _id: { toString(): string } }>();
+  if (agency) return agency._id.toString();
   const created = await AgencyModel.create({
     name: "Default Agency",
     slug: "default-agency",
@@ -76,7 +76,9 @@ export const requireAuth = [
         let name = "New User";
         try {
           const clerkUser = await clerk.users.getUser(clerkUserId);
-          const primaryEmail = clerkUser.emailAddresses?.find((e: { id: string; emailAddress: string }) => e.id === clerkUser.primaryEmailAddressId);
+          const primaryEmail = clerkUser.emailAddresses?.find(
+            (e: { id: string; emailAddress: string }) => e.id === clerkUser.primaryEmailAddressId,
+          );
           if (primaryEmail) email = primaryEmail.emailAddress;
           if (clerkUser.firstName || clerkUser.lastName) {
             name = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ");

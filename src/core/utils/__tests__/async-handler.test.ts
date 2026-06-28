@@ -64,9 +64,7 @@ describe("async-handler", () => {
 
     // The synchronous throw happens during fn(...) evaluation, before
     // Promise.resolve wraps it, so it propagates out of asyncHandler.
-    expect(() => asyncHandler(fn as never)({} as never, {} as never, next)).toThrow(
-      "sync-boom",
-    );
+    expect(() => asyncHandler(fn as never)({} as never, {} as never, next)).toThrow("sync-boom");
     expect(next).not.toHaveBeenCalled();
   });
 });

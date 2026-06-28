@@ -24,7 +24,11 @@ export const UsersController = {
   }),
 
   update: asyncHandler(async (req: Request, res: Response) => {
-    const updated = await UsersService.updateById(String(req.params.id), req.user!.agencyId, req.body);
+    const updated = await UsersService.updateById(
+      String(req.params.id),
+      req.user!.agencyId,
+      req.body,
+    );
     if (!updated) throw NotFoundError("User");
     res.json(success(updated));
   }),

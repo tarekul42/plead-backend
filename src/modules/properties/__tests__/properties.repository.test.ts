@@ -40,7 +40,9 @@ jest.mock("../properties.model", () => ({
 jest.mock("../../users/users.model", () => ({
   UserModel: {
     find: jest.fn(() => ({ select: jest.fn(() => ({ lean: jest.fn().mockResolvedValue([]) })) })),
-    findById: jest.fn(() => ({ select: jest.fn(() => ({ lean: jest.fn().mockResolvedValue(null) })) })),
+    findById: jest.fn(() => ({
+      select: jest.fn(() => ({ lean: jest.fn().mockResolvedValue(null) })),
+    })),
   },
 }));
 

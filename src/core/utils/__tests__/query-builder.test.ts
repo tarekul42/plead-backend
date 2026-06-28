@@ -26,7 +26,9 @@ function createMockModel(findResult: unknown[] = [], countResult = 0, firstResul
   firstQuery.exec = jest.fn().mockResolvedValue(firstResult);
   const findOne = jest.fn().mockReturnValue(firstQuery);
 
-  const countDocuments = jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(countResult) });
+  const countDocuments = jest
+    .fn()
+    .mockReturnValue({ exec: jest.fn().mockResolvedValue(countResult) });
 
   return { find, findOne, countDocuments, query, firstQuery };
 }

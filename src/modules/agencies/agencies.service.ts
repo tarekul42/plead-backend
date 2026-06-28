@@ -13,10 +13,11 @@ export const AgenciesService = {
   },
 
   async create(data: Partial<IAgency>) {
-    const base = data.name
-      ?.toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)+/g, "") || "agency";
+    const base =
+      data.name
+        ?.toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)+/g, "") || "agency";
     let slug = base;
     while (await AgenciesRepository.findBySlug(slug)) {
       slug = `${base}-${Date.now()}`;

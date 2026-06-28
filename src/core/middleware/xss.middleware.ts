@@ -2,7 +2,20 @@ import type { Request, Response, NextFunction } from "express";
 import sanitizeHtml from "sanitize-html";
 
 const ALLOWED_TAGS: string[] = [];
-const STRING_FIELDS = ["title", "description", "name", "notes", "comment", "content", "excerpt", "message", "subject", "outcome", "address", "location"];
+const STRING_FIELDS = [
+  "title",
+  "description",
+  "name",
+  "notes",
+  "comment",
+  "content",
+  "excerpt",
+  "message",
+  "subject",
+  "outcome",
+  "address",
+  "location",
+];
 
 function sanitizeValue(val: unknown, depth = 0): unknown {
   if (depth > 10) return val;

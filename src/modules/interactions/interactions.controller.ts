@@ -12,16 +12,36 @@ export const InteractionsController = {
     const leadId = typeof req.query.leadId === "string" ? req.query.leadId : undefined;
     const startDate = typeof req.query.startDate === "string" ? req.query.startDate : undefined;
     const endDate = typeof req.query.endDate === "string" ? req.query.endDate : undefined;
-    const { data, total } = req.user!.role === "agent"
-      ? await InteractionsService.listByUser(req.user!.id, req.user!.agencyId, page, limit, type, startDate, endDate)
-      : await InteractionsService.listByAgency(req.user!.agencyId, page, limit, type, leadId, startDate, endDate);
+    const { data, total } =
+      req.user!.role === "agent"
+        ? await InteractionsService.listByUser(
+            req.user!.id,
+            req.user!.agencyId,
+            page,
+            limit,
+            type,
+            startDate,
+            endDate,
+          )
+        : await InteractionsService.listByAgency(
+            req.user!.agencyId,
+            page,
+            limit,
+            type,
+            leadId,
+            startDate,
+            endDate,
+          );
     res.json(success(data, Pagination.meta(page, limit, total)));
   }),
 
   listByLead: asyncHandler(async (req: Request, res: Response) => {
     const { page, limit } = Pagination.from(req.query, 50, 100);
     const { data, total } = await InteractionsService.listByLead(
-      String(req.params.leadId), req.user!.agencyId, page, limit,
+      String(req.params.leadId),
+      req.user!.agencyId,
+      page,
+      limit,
     );
     res.json(success(data, Pagination.meta(page, limit, total)));
   }),
@@ -37,13 +57,24 @@ export const InteractionsController = {
   }),
 
   update: asyncHandler(async (req: Request, res: Response) => {
-    const interaction = await InteractionsService.update(String(req.params.id), req.user!.agencyId, req.user!.id, req.user!.role, req.body);
+    const interaction = await InteractionsService.update(
+      String(req.params.id),
+      req.user!.agencyId,
+      req.user!.id,
+      req.user!.role,
+      req.body,
+    );
     if (!interaction) throw NotFoundError("Interaction");
     res.json(success(interaction));
   }),
 
   delete: asyncHandler(async (req: Request, res: Response) => {
-    const deleted = await InteractionsService.delete(String(req.params.id), req.user!.agencyId, req.user!.id, req.user!.role);
+    const deleted = await InteractionsService.delete(
+      String(req.params.id),
+      req.user!.agencyId,
+      req.user!.id,
+      req.user!.role,
+    );
     if (!deleted) throw NotFoundError("Interaction");
     res.json(success({ deleted: true }));
   }),

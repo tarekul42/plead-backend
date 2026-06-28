@@ -12,7 +12,11 @@ import { getErrorMessage } from "../../core/utils/safe-error";
 import { InternalError } from "../../core/utils/app-error";
 
 export const AgenciesRepository = {
-  async findAll(agencyId: string, page = 1, limit = 20): Promise<{ data: IAgency[]; total: number }> {
+  async findAll(
+    agencyId: string,
+    page = 1,
+    limit = 20,
+  ): Promise<{ data: IAgency[]; total: number }> {
     return new QueryBuilder(AgencyModel)
       .where("_id", agencyId)
       .sortAsc("name")
@@ -56,11 +60,17 @@ export const AgenciesRepository = {
         return result.deletedCount > 0;
       } catch (error) {
         await session.abortTransaction();
-        const isTransient = typeof error === "object" && error !== null && "errorLabels" in error
-          && Array.isArray((error as { errorLabels: string[] }).errorLabels)
-          && (error as { errorLabels: string[] }).errorLabels.includes("TransientTransactionError");
+        const isTransient =
+          typeof error === "object" &&
+          error !== null &&
+          "errorLabels" in error &&
+          Array.isArray((error as { errorLabels: string[] }).errorLabels) &&
+          (error as { errorLabels: string[] }).errorLabels.includes("TransientTransactionError");
         if (isTransient && attempt < maxRetries) {
-          logger.warn({ attempt, agencyId, error: getErrorMessage(error) }, "Transaction failed, retrying");
+          logger.warn(
+            { attempt, agencyId, error: getErrorMessage(error) },
+            "Transaction failed, retrying",
+          );
           continue;
         }
         throw InternalError(`Failed to delete agency: ${getErrorMessage(error)}`);

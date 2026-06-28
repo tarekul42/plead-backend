@@ -23,7 +23,9 @@ function mockReq(overrides: Partial<Request> = {}): Request {
   return {
     headers: {},
     body: {},
-    params: {}, query: {}, user: undefined,
+    params: {},
+    query: {},
+    user: undefined,
     ...overrides,
   } as unknown as Request;
 }
@@ -55,10 +57,12 @@ describe("WebhooksController.clerk", () => {
     await WebhooksController.clerk(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      success: false,
-      error: expect.objectContaining({ code: "WEBHOOK_INVALID" }),
-    }));
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        error: expect.objectContaining({ code: "WEBHOOK_INVALID" }),
+      }),
+    );
     expect(mockVerify).not.toHaveBeenCalled();
   });
 
@@ -74,10 +78,12 @@ describe("WebhooksController.clerk", () => {
 
     expect(mockVerify).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      success: false,
-      error: expect.objectContaining({ code: "WEBHOOK_INVALID" }),
-    }));
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        error: expect.objectContaining({ code: "WEBHOOK_INVALID" }),
+      }),
+    );
   });
 
   it("routes user.created to handleUserCreated", async () => {
@@ -142,10 +148,12 @@ describe("WebhooksController.clerk", () => {
     await WebhooksController.clerk(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      success: false,
-      error: expect.objectContaining({ code: "WEBHOOK_ERROR" }),
-    }));
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        error: expect.objectContaining({ code: "WEBHOOK_ERROR" }),
+      }),
+    );
   });
 
   // --- Security-specific tests ---
@@ -170,10 +178,12 @@ describe("WebhooksController.clerk", () => {
 
     expect(mockVerify).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      success: false,
-      error: expect.objectContaining({ code: "WEBHOOK_INVALID" }),
-    }));
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        error: expect.objectContaining({ code: "WEBHOOK_INVALID" }),
+      }),
+    );
   });
 
   it("returns 400 for malformed svix-signature format", async () => {
@@ -195,10 +205,12 @@ describe("WebhooksController.clerk", () => {
 
     expect(mockVerify).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      success: false,
-      error: expect.objectContaining({ code: "WEBHOOK_INVALID" }),
-    }));
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        error: expect.objectContaining({ code: "WEBHOOK_INVALID" }),
+      }),
+    );
   });
 
   it("returns 400 when body is empty or missing", async () => {
@@ -210,9 +222,11 @@ describe("WebhooksController.clerk", () => {
 
     // Should fail during verify because body is null/empty
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      success: false,
-      error: expect.objectContaining({ code: "WEBHOOK_INVALID" }),
-    }));
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        error: expect.objectContaining({ code: "WEBHOOK_INVALID" }),
+      }),
+    );
   });
 });

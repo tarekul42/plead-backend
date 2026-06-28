@@ -59,7 +59,13 @@ describe("UsersService", () => {
 
   describe("create", () => {
     it("should create and return a user", async () => {
-      const data = { clerkId: "clerk_123", email: "john@example.com", name: "John Doe", role: "agent" as const, agencyId: "507f1f77bcf86cd799439012" } as unknown as Partial<IUser>;
+      const data = {
+        clerkId: "clerk_123",
+        email: "john@example.com",
+        name: "John Doe",
+        role: "agent" as const,
+        agencyId: "507f1f77bcf86cd799439012",
+      } as unknown as Partial<IUser>;
       (UsersRepository.create as jest.Mock).mockResolvedValue(mockUser);
 
       const result = await UsersService.create(data);
@@ -94,16 +100,26 @@ describe("UsersService", () => {
       const updated = { ...mockUser, title: "Senior Agent" };
       (UsersRepository.updateById as jest.Mock).mockResolvedValue(updated);
 
-      const result = await UsersService.updateById("507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012", { title: "Senior Agent" });
+      const result = await UsersService.updateById(
+        "507f1f77bcf86cd799439011",
+        "507f1f77bcf86cd799439012",
+        { title: "Senior Agent" },
+      );
 
-      expect(UsersRepository.updateById).toHaveBeenCalledWith("507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012", { title: "Senior Agent" });
+      expect(UsersRepository.updateById).toHaveBeenCalledWith(
+        "507f1f77bcf86cd799439011",
+        "507f1f77bcf86cd799439012",
+        { title: "Senior Agent" },
+      );
       expect(result).toEqual(updated);
     });
 
     it("should return null when user not found", async () => {
       (UsersRepository.updateById as jest.Mock).mockResolvedValue(null);
 
-      const result = await UsersService.updateById("nonexistent", "agency1", { title: "Senior Agent" });
+      const result = await UsersService.updateById("nonexistent", "agency1", {
+        title: "Senior Agent",
+      });
 
       expect(result).toBeNull();
     });

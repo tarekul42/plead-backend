@@ -25,7 +25,10 @@ jest.mock("mongoose", () => {
 
 import { ZodError, z } from "zod";
 import { errorHandler } from "../../middleware/error-handler.middleware";
-import { AppError, NotFoundError, ValidationError as AppValidationError } from "../../utils/app-error";
+import {
+  NotFoundError,
+  ValidationError as AppValidationError,
+} from "../../utils/app-error";
 import mongoose from "mongoose";
 
 function makeZodError(): ZodError {
@@ -73,7 +76,11 @@ describe("error-handler middleware", () => {
       expect(res.status).toHaveBeenCalledWith(422);
       expect(res.json).toHaveBeenCalledWith({
         success: false,
-        error: { code: "VALIDATION_ERROR", message: "Validation failed", details: { field: "email" } },
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Validation failed",
+          details: { field: "email" },
+        },
       });
     });
   });

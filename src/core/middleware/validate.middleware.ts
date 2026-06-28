@@ -9,10 +9,14 @@ function formatZodError(err: ZodError) {
     message: issue.message,
     code: issue.code,
   }));
-  return new AppError(422, "VALIDATION_ERROR", "Validation failed", { fields: fieldErrors, message: fieldErrors[0]?.message || "Invalid input" });
+  return new AppError(422, "VALIDATION_ERROR", "Validation failed", {
+    fields: fieldErrors,
+    message: fieldErrors[0]?.message || "Invalid input",
+  });
 }
 
-export const validate = (schema: ZodSchema, source: "body" | "query" | "params" = "body") =>
+export const validate =
+  (schema: ZodSchema, source: "body" | "query" | "params" = "body") =>
   (req: Request, _res: Response, next: NextFunction) => {
     if (source === "body" && typeof req.body === "object" && req.body !== null) {
       req.body = sanitizeObject(req.body);
@@ -20,13 +24,13 @@ export const validate = (schema: ZodSchema, source: "body" | "query" | "params" 
     const dataToValidate = req[source];
     const result = schema.safeParse(dataToValidate);
     if (!result.success) return next(formatZodError(result.error));
-    
+
     Object.defineProperty(req, source, {
       value: result.data,
       writable: true,
       enumerable: true,
-      configurable: true
+      configurable: true,
     });
-    
+
     next();
   };

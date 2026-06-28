@@ -63,7 +63,13 @@ describe("UsersRepository", () => {
 
   describe("create", () => {
     it("calls UserModel.create with data", async () => {
-      const data = { clerkId: "clerk_1", email: "test@test.com", name: "Test", role: "agent", agencyId: "agency_1" };
+      const data = {
+        clerkId: "clerk_1",
+        email: "test@test.com",
+        name: "Test",
+        role: "agent",
+        agencyId: "agency_1",
+      };
       mockCreate.mockResolvedValue(data);
       const result = await UsersRepository.create(data as any);
       expect(mockCreate).toHaveBeenCalledWith(data);
@@ -74,7 +80,9 @@ describe("UsersRepository", () => {
   describe("update", () => {
     it("finds and updates by clerkId", async () => {
       const updated = { clerkId: "clerk_1", name: "Updated" };
-      (jest.requireMock("../users.model").UserModel.findOneAndUpdate as jest.Mock).mockResolvedValue(updated);
+      (
+        jest.requireMock("../users.model").UserModel.findOneAndUpdate as jest.Mock
+      ).mockResolvedValue(updated);
 
       const result = await UsersRepository.update("clerk_1", { name: "Updated" });
       expect(result).toEqual(updated);
@@ -84,7 +92,9 @@ describe("UsersRepository", () => {
   describe("updateById", () => {
     it("finds and updates by _id and agencyId", async () => {
       const updated = { _id: "abc", name: "Updated" };
-      (jest.requireMock("../users.model").UserModel.findOneAndUpdate as jest.Mock).mockResolvedValue(updated);
+      (
+        jest.requireMock("../users.model").UserModel.findOneAndUpdate as jest.Mock
+      ).mockResolvedValue(updated);
 
       const result = await UsersRepository.updateById("abc", "agency_1", { name: "Updated" });
       expect(result).toEqual(updated);
