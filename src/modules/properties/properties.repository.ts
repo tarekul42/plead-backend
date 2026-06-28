@@ -1,5 +1,4 @@
 import { PropertyModel, IProperty } from "./properties.model";
-import { UserModel } from "../users/users.model";
 import { QueryBuilder } from "../../core/utils/query-builder";
 
 interface ListParams {
@@ -16,28 +15,13 @@ interface ListParams {
   limit: number;
 }
 
-async function populateAgent(property: IProperty | null): Promise<IProperty | null> {
-  if (!property) return property;
-  if (property.assignedAgentId) {
-    const agent = await UserModel.findById(property.assignedAgentId).select("name email avatarUrl").lean();
-    return { ...property, assignedAgent: agent || null } as unknown as IProperty;
-  }
-  return property;
-}
-
-async function populateAgentList(properties: IProperty[]): Promise<IProperty[]> {
-  const agentIds = [...new Set(properties.map(p => p.assignedAgentId?.toString()).filter(Boolean))];
-  const agents = await UserModel.find({ _id: { $in: agentIds } }).select("name email avatarUrl").lean();
-  const agentMap: Record<string, unknown> = {};
-  for (const a of agents) agentMap[a._id.toString()] = a;
-  return properties.map(p => ({ ...p, assignedAgent: agentMap[p.assignedAgentId?.toString()] || null }) as unknown as IProperty);
-}
+const AGENT_SELECT = "name email avatarUrl";
 
 async function findById(id: string, agencyId: string): Promise<IProperty | null> {
-  const query: Record<string, unknown> = { _id: id };
-  if (agencyId) query.agencyId = agencyId;
-  const property = await PropertyModel.findOne(query).lean();
-  return populateAgent(property);
+  const query: Record<string, unknown> = { _id: id, agencyId };
+  return PropertyModel.findOne(query)
+    .populate<{ assignedAgent: { _id: unknown; name: string; email: string; avatarUrl?: string } | null }>("assignedAgentId", AGENT_SELECT)
+    .lean();
 }
 
 const sortMap: Record<string, string> = {
@@ -65,15 +49,13 @@ export const PropertiesRepository = {
       .paginate(params.page, params.limit, 100, 12);
 
     const { data, total } = await builder.exec();
-    const enriched = await populateAgentList(data);
-    return { data: enriched, total };
+    return { data, total };
   },
 
   async findBySlug(slug: string, agencyId: string): Promise<IProperty | null> {
-    const query: Record<string, unknown> = { slug };
-    if (agencyId) query.agencyId = agencyId;
-    const property = await PropertyModel.findOne(query).lean();
-    return populateAgent(property);
+    return PropertyModel.findOne({ slug, agencyId })
+      .populate<{ assignedAgent: { _id: unknown; name: string; email: string; avatarUrl?: string } | null }>("assignedAgentId", AGENT_SELECT)
+      .lean();
   },
 
   findById,
@@ -110,11 +92,10 @@ export const PropertiesRepository = {
     };
     if (agencyId) query.agencyId = agencyId;
 
-    const properties = await PropertyModel.find(query)
+    return PropertyModel.find(query)
       .sort({ publishedAt: -1 })
       .limit(limit)
+      .populate("assignedAgentId", AGENT_SELECT)
       .lean();
-
-    return populateAgentList(properties);
   },
 };

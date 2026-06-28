@@ -147,4 +147,72 @@ describe("WebhooksController.clerk", () => {
       error: expect.objectContaining({ code: "WEBHOOK_ERROR" }),
     }));
   });
+
+  // --- Security-specific tests ---
+
+  it("returns 400 for replay attack with old svix-timestamp", async () => {
+    mockVerify.mockImplementation(() => {
+      throw new Error("Timestamp too old");
+    });
+    const oldTimestamp = String(Math.floor(Date.now() / 1000) - 3000); // 50 min in the past
+    const req = mockReq({
+      headers: {
+        "svix-id": "svix_id_replay",
+        "svix-timestamp": oldTimestamp,
+        "svix-signature": "v1,base64legacy=",
+      },
+      body: { type: "user.created", data: { id: "u_replay" } },
+    });
+    const res = mockRes();
+    const next = jest.fn();
+
+    await WebhooksController.clerk(req, res, next);
+
+    expect(mockVerify).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: false,
+      error: expect.objectContaining({ code: "WEBHOOK_INVALID" }),
+    }));
+  });
+
+  it("returns 400 for malformed svix-signature format", async () => {
+    mockVerify.mockImplementation(() => {
+      throw new Error("Invalid signature encoding");
+    });
+    const req = mockReq({
+      headers: {
+        "svix-id": "svix_id_bad",
+        "svix-timestamp": "1700000000",
+        "svix-signature": "not-a-valid-signature",
+      },
+      body: { type: "user.created", data: { id: "u_badsig" } },
+    });
+    const res = mockRes();
+    const next = jest.fn();
+
+    await WebhooksController.clerk(req, res, next);
+
+    expect(mockVerify).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: false,
+      error: expect.objectContaining({ code: "WEBHOOK_INVALID" }),
+    }));
+  });
+
+  it("returns 400 when body is empty or missing", async () => {
+    const req = mockReq({ headers: validHeaders, body: null });
+    const res = mockRes();
+    const next = jest.fn();
+
+    await WebhooksController.clerk(req, res, next);
+
+    // Should fail during verify because body is null/empty
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: false,
+      error: expect.objectContaining({ code: "WEBHOOK_INVALID" }),
+    }));
+  });
 });

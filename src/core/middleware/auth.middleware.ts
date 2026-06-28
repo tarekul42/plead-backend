@@ -1,5 +1,6 @@
 import { type Request, type Response, type NextFunction } from "express";
 import { requireAuth as clerkRequireAuth } from "@clerk/express";
+import { LRUCache } from "lru-cache";
 import mongoose from "mongoose";
 import { UnauthorizedError } from "../utils/app-error";
 import { env } from "../config/env";
@@ -15,18 +16,18 @@ interface CachedUser {
   agencyId: string;
 }
 
-const userCache = new Map<string, { user: CachedUser; expiresAt: number }>();
 const USER_CACHE_TTL = 5 * 60 * 1000;
+const userCache = new LRUCache<string, CachedUser>({
+  max: 1000,
+  ttl: USER_CACHE_TTL,
+});
 
 function getCachedUser(clerkId: string): CachedUser | undefined {
-  const entry = userCache.get(clerkId);
-  if (entry && entry.expiresAt > Date.now()) return entry.user;
-  userCache.delete(clerkId);
-  return undefined;
+  return userCache.get(clerkId);
 }
 
 function setCachedUser(clerkId: string, user: CachedUser): void {
-  userCache.set(clerkId, { user, expiresAt: Date.now() + USER_CACHE_TTL });
+  userCache.set(clerkId, user);
 }
 
 function invalidateUser(clerkId: string): void {

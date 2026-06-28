@@ -6,6 +6,7 @@ import { env } from "./core/config/env";
 import { requestLogger } from "./core/middleware/request-logger.middleware";
 import { globalRateLimit, aiRateLimit } from "./core/middleware/rate-limit.middleware";
 import { sanitizeMiddleware } from "./core/middleware/sanitize.middleware";
+import { xssSanitizeMiddleware } from "./core/middleware/xss.middleware";
 import { hppMiddleware } from "./core/middleware/hpp.middleware";
 import { notFound } from "./core/middleware/not-found.middleware";
 import { errorHandler } from "./core/middleware/error-handler.middleware";
@@ -52,6 +53,23 @@ const app = express();
 
 app.set("trust proxy", 1);
 
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https://res.cloudinary.com", "https://*.tile.openstreetmap.org"],
+      connectSrc: ["'self'", env.CORS_ORIGIN, "https://api.clerk.com", "https://clerk.plead.lcl"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      frameSrc: ["'self'", "https://accounts.clerk.com"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+}));
+
 const allowedOrigins = env.CORS_ORIGIN.split(",").map(s => s.trim()).filter(Boolean);
 app.use(cors({
   origin: (origin, cb) => {
@@ -60,11 +78,11 @@ app.use(cors({
   },
   credentials: true,
 }));
-app.use(helmet());
 app.use(cookieParser());
 
 // Security middlewares
 app.use(sanitizeMiddleware);
+app.use(xssSanitizeMiddleware);
 app.use(hppMiddleware);
 
 // Raw body parser for webhooks (svix needs exact raw body for signature verification)
