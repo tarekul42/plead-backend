@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { LeadsRepository } from "./leads.repository";
 import { LeadModel, ILead } from "./leads.model";
 
@@ -25,20 +26,23 @@ export const LeadsService = {
   },
 
   async getStats(filter: { agencyId: string; assignedAgentId?: string }) {
-    const match: Record<string, unknown> = { agencyId: filter.agencyId };
-    if (filter.assignedAgentId) match.assignedAgentId = filter.assignedAgentId;
+    const agencyOid = new mongoose.Types.ObjectId(filter.agencyId);
+    const agentOid = filter.assignedAgentId ? new mongoose.Types.ObjectId(filter.assignedAgentId) : undefined;
+
+    const leadsFilter: Record<string, unknown> = { agencyId: filter.agencyId };
+    if (agentOid) leadsFilter.assignedAgentId = agentOid;
 
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
     const [total, byStatus, last7Days, conversionResult, weeklyTrend] = await Promise.all([
-      LeadModel.countDocuments(match),
+      LeadModel.countDocuments(leadsFilter),
       LeadModel.aggregate([
-        { $match: match },
+        { $match: { agencyId: agencyOid, ...(agentOid ? { assignedAgentId: agentOid } : {}) } },
         { $group: { _id: "$status", count: { $sum: 1 } } },
       ]),
-      LeadModel.countDocuments({ ...match, createdAt: { $gte: sevenDaysAgo } }),
+      LeadModel.countDocuments({ ...leadsFilter, createdAt: { $gte: sevenDaysAgo } }),
       LeadModel.aggregate([
-        { $match: match },
+        { $match: { agencyId: agencyOid, ...(agentOid ? { assignedAgentId: agentOid } : {}) } },
         {
           $facet: {
             total: [{ $count: "count" }],
@@ -47,7 +51,7 @@ export const LeadsService = {
         },
       ]),
       LeadModel.aggregate([
-        { $match: { ...match, createdAt: { $gte: sevenDaysAgo } } },
+        { $match: { agencyId: agencyOid, ...(agentOid ? { assignedAgentId: agentOid } : {}), createdAt: { $gte: sevenDaysAgo } } },
         {
           $group: {
             _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },

@@ -103,16 +103,10 @@ describe("config/env", () => {
     expect(env.GROQ_MODEL).toBe("llama-3.1-8b-instant");
   });
 
-  it("defaults AI providers", async () => {
+  it("defaults OPENROUTER_MODEL", async () => {
     withEnv({});
     const { env } = await import("../../config/env");
-    expect(env.AI_PROVIDER_PRIMARY).toBe("gemini");
-    expect(env.AI_PROVIDER_FALLBACK).toBe("groq");
-  });
-
-  it("rejects an invalid AI_PROVIDER_PRIMARY", async () => {
-    withEnv({ AI_PROVIDER_PRIMARY: "openai" });
-    await expect(import("../../config/env")).rejects.toThrow();
+    expect(env.OPENROUTER_MODEL).toBe("google/gemma-2-9b-it:free");
   });
 
   it("coerces AI_CACHE_TTL_HOURS to a number with a default of 24", async () => {
