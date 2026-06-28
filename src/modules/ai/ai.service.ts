@@ -78,7 +78,7 @@ export const AiService = {
 
     let result: { matches: unknown[] };
     let tokensUsed = 0;
-    let provider = "";
+    let provider = "rule-based";
 
     if (aiResult) {
       const { data: aiData, tokensUsed: aiTokens, provider: aiProvider } = aiResult;
@@ -175,7 +175,7 @@ export const AiService = {
 
     let result: { title: string; description: string; highlights: string[] };
     let tokensUsed = 0;
-    let provider = "";
+    let provider = "rule-based";
 
     if (aiResult) {
       const { data: aiData, tokensUsed: aiTokens, provider: aiProvider } = aiResult;
@@ -271,7 +271,7 @@ export const AiService = {
 
     let result: { subject: string; body: string };
     let tokensUsed = 0;
-    let provider = "";
+    let provider = "rule-based";
 
     if (aiResult) {
       const { data: aiData, tokensUsed: aiTokens, provider: aiProvider } = aiResult;
