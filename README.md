@@ -113,7 +113,7 @@ Server starts at `http://localhost:8080` (or your configured `PORT`).
 | `GEMINI_API_KEY` | Google Gemini API key | `AIzaXxx` |
 | `GEMINI_MODEL` | Gemini model name | `gemini-1.5-flash` |
 | `GROQ_API_KEY` | Groq API key (optional fallback) | `gsk_xxx` |
-| `CORS_ORIGIN` | Allowed CORS origins (comma-separated) | `http://localhost:3000,https://plead.vercel.app` |
+| `CORS_ORIGIN` | Allowed CORS origins (comma-separated) | `http://localhost:3000,https://plead-frontend.vercel.app` |
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name | `your-cloud` |
 | `CLOUDINARY_API_KEY` | Cloudinary API key | `xxx` |
 | `CLOUDINARY_API_SECRET` | Cloudinary API secret | `xxx` |
@@ -180,9 +180,9 @@ src/
 
 | Resource | URL |
 |----------|-----|
-| 🌐 **Live API** | https://plead-api.onrender.com |
+| 🌐 **Live API** | https://plead-backend.vercel.app |
 | 🖥️ **Frontend Repo** | https://github.com/tarekul42/plead-frontend |
-| 🌍 **Live App** | https://plead.vercel.app |
+| 🌍 **Live App** | https://plead-frontend.vercel.app |
 | 📧 **Contact** | tarekulrifat142@gmail.com |
 
 ---
