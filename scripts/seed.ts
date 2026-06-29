@@ -44,7 +44,7 @@ async function seed() {
   console.log(`Agency created: ${agency.name} (${agency._id})`);
 
   // ─── Users (Clerk + MongoDB) ────────────────────────────────────────────────
-  const { createClerkClient } = require("@clerk/express");
+  const { createClerkClient } = await import("@clerk/express");
   const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
 
   const demoAccounts = [
