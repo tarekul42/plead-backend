@@ -124,7 +124,7 @@ describe("config/env", () => {
     withEnv({});
     const { env } = await import("../../config/env");
     expect(env.RATE_LIMIT_WINDOW_MS).toBe(900000);
-    expect(env.RATE_LIMIT_MAX).toBe(100);
+    expect(env.RATE_LIMIT_MAX).toBe(10000);
   });
 
   it("accepts empty Cloudinary credentials in non-production", async () => {

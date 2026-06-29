@@ -18,7 +18,8 @@ interface ListParams {
 const AGENT_SELECT = "name email avatarUrl";
 
 async function findById(id: string, agencyId: string): Promise<IProperty | null> {
-  const query: Record<string, unknown> = { _id: id, agencyId };
+  const query: Record<string, unknown> = { _id: id };
+  if (agencyId) query.agencyId = agencyId;
   return PropertyModel.findOne(query)
     .populate<{
       assignedAgent: { _id: unknown; name: string; email: string; avatarUrl?: string } | null;
@@ -55,7 +56,9 @@ export const PropertiesRepository = {
   },
 
   async findBySlug(slug: string, agencyId: string): Promise<IProperty | null> {
-    return PropertyModel.findOne({ slug, agencyId })
+    const query: Record<string, unknown> = { slug };
+    if (agencyId) query.agencyId = agencyId;
+    return PropertyModel.findOne(query)
       .populate<{
         assignedAgent: { _id: unknown; name: string; email: string; avatarUrl?: string } | null;
       }>("assignedAgentId", AGENT_SELECT)
