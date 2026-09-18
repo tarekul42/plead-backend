@@ -4,6 +4,7 @@ import { success } from "../../core/utils/api-response";
 import { NotFoundError } from "../../core/utils/app-error";
 import { Pagination } from "../../core/utils/pagination";
 import { PropertiesService } from "./properties.service";
+import { PropertyModel } from "./properties.model";
 import type { ListQuery } from "./properties.service";
 
 function getAgencyId(req: Request): string {
@@ -56,5 +57,17 @@ export const PropertiesController = {
   related: asyncHandler(async (req: Request, res: Response) => {
     const related = await PropertiesService.getRelated(String(req.params.id), getAgencyId(req));
     res.json(success(related));
+  }),
+
+  categoryCounts: asyncHandler(async (_req: Request, res: Response) => {
+    const counts = await PropertyModel.aggregate([
+      { $group: { _id: "$propertyType", count: { $sum: 1 } } },
+    ]);
+
+    const result: Record<string, number> = {};
+    counts.forEach((c) => {
+      result[c._id] = c.count;
+    });
+    res.json(success(result));
   }),
 };

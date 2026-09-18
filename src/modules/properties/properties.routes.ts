@@ -14,6 +14,7 @@ import {
 const propertiesRouter = Router();
 
 propertiesRouter.get("/", validate(listPropertiesQuerySchema, "query"), PropertiesController.list);
+propertiesRouter.get("/category-counts", PropertiesController.categoryCounts);
 propertiesRouter.get(
   "/id/:id",
   validate(propertyParamSchema, "params"),
